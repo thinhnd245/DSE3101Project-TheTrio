@@ -1,0 +1,304 @@
+---
+title: "dse 3101 back-end"
+author: "Yi Lu"
+date: "2025-03-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+install.packages("xlsx")     
+install.packages("tseries")
+install.packages("forecast")
+
+
+rm(list = ls())
+library("xlsx")  
+library(readr)
+library(readxl)
+
+
+library(tidyverse)
+library(ggplot2)
+
+library("data.table")
+
+library(tseries)
+library(forecast)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r data-cleaning}
+quarterly_GDP <- read.xlsx2("../data/ROUTPUTQvQd.xlsx",sheetIndex=1,row.names=1)
+
+
+quarterly_GDP <- quarterly_GDP %>%
+  mutate(across(everything(), .fns = ~ as.numeric(.)))
+
+
+AR_series_GDP <-lapply (quarterly_GDP,function(col){
+  cleaned_data <-na.omit(col)
+  ts(cleaned_data,start=c(1947,2),frequency=4)
+}
+)
+
+quarterly_log_GDP <- as.data.frame(lapply(quarterly_GDP, log))
+
+AR_series_log_GDP <-lapply (quarterly_log_GDP,function(col){
+  cleaned_data <-na.omit(col)
+  ts(cleaned_data,start=c(1947,2),frequency=4)
+}
+)
+
+adf_test <- function(ts_list) {
+  
+  stationary_count <- 0
+  results <- lapply(ts_list, function(ts) {
+    test <- adf.test(ts)
+    stationary <- ifelse(test$p.value < 0.05, "Yes", "No")
+    
+    if(stationary=="No"){
+      stationary_count <<-stationary_count+1
+    }
+    list(
+      ADF_Statistic = test$statistic,
+      p_value = test$p.value,
+      stationary_value=stationary
+    )
+  })
+  
+  return(stationary_count)
+}
+
+adf_results_GDP <- adf_test(AR_series_GDP)
+
+adf_results_GDP
+
+```
+
+
+
+
+
+
+
+```{r}
+
+
+x="ROUTPUT21Q3"
+
+test_ts <- AR_series_log_GDP[[x]]
+
+test_ts
+
+temp=embed(test_ts,2)
+
+Y=as.matrix(400*(temp[,1]-temp[,2]))
+
+adf_test(ts(Y))
+
+fitARp=function(Y,p,h){
+  
+  #Inputs: Y- predicted variable,  p - AR order, h -forecast horizon
+  
+  
+  aux=embed(Y,p+h) #create p lags + forecast horizon shift (=h option)
+  y=aux[,1] #  Y variable aligned/adjusted for missing data due to lags
+  X=as.matrix(aux[,-c(1:(ncol(Y)*h))]) # lags of Y (predictors) corresponding to forecast horizon (prevent leakage)  
+  
+  if(h==1){ 
+    X.out=tail(aux,1)[1:ncol(X)] #retrieve last p observations if one-step forecast 
+  }else{
+    X.out=aux[,-c(1:(ncol(Y)*(h-1)))] #delete first (h-1) columns of aux,  
+    X.out=tail(X.out,1)[1:ncol(X)] #last p observations to predict T+1 
+  }
+  
+  
+  
+  model=lm(y~X) #estimate direct h-step AR(p) by OLS 
+  coef=coef(model) #extract coefficients
+  
+  
+  
+  pred=c(1,X.out)%*%coef #make a forecast using the last few observations: a direct h-step forecast.
+  #note the addition of a constant to the test observation vector
+  
+  rmsfe=sqrt(sum(model$residuals^2)/nrow(X)) #get unadjusted rmsfe (ignoring estimation uncertainty)
+  
+  return(list("model"=model,"pred"=pred,"coef"=coef, "rmsfe"=rmsfe)) #save estimated AR regression, prediction, and estimated coefficients
+}
+
+
+
+arp.rolling.window=function(Y,noos,p=1,h=1){ #equality here  means deafult inputs
+  
+  save.coef=matrix(NA,noos,p+1) #blank matrix for coefficients at each iteration (constant+ p lags)
+  save.pred=matrix(NA,noos,1) #blank for forecasts
+  for(i in noos:1){  #NB: backwards FOR loop: going from noos down to 1
+    
+    Y.window=Y[(1+noos-i):(nrow(Y)-i),] #define the estimation window 
+    Y.window=as.matrix(Y.window)
+    winfit=fitARp(Y.window,p,h) #call the function to fit the AR(p) and generate h-step forecast
+    save.coef[(1+noos-i),]=winfit$coef #save estimated coefficients
+    save.pred[(1+noos-i),]=winfit$pred #save the forecast
+    #cat("iteration",(1+noos-i),"\n") #display iteration number (useful for slower ML methods)
+  }
+  
+  #Some useful post-prediction misc stuff:
+  real=Y #get actual values
+  plot(real,type="l")
+  lines(c(rep(NA,length(real)-noos),save.pred),col="red") #padded with NA for blanks, plot predictions vs. actual
+  
+  rmse=sqrt(mean((tail(real,noos)-save.pred)^2)) #compute RMSE
+  mae=mean(abs(tail(real,noos)-save.pred)) #compute MAE (Mean Absolute Error)
+  errors=c("rmse"=rmse,"mae"=mae) #stack errors in a vector
+  
+  return(list("pred"=save.pred,"coef"=save.coef,"errors"=errors)) #return forecasts, history of estimated coefficients, and RMSE and MAE for the period.
+}
+
+noos=50
+
+size=as.numeric(length(AR_series_log_GDP[[x]]))
+
+Y2=as.matrix(Y[1:(size-50),])
+ar1=arp.rolling.window(Y2,noos,1,1) #1-step POOS AR(1) forecast
+ar2=arp.rolling.window(Y2,noos,2,1) #1-step POOS AR(2) forecast
+ar3=arp.rolling.window(Y2,noos,3,1) #1-step POOS AR(3) forecast
+ar4=arp.rolling.window(Y2,noos,4,1) #1-step POOS AR(4) forecast
+
+vintage= "ROUTPUT23Q4"
+
+test_vintage = AR_series_log_GDP[[vintage]]
+
+
+temp_vintage=embed(test_vintage,2)
+
+Y_vintage=as.matrix(400*(temp[,1]-temp[,2]))
+
+adf_test(ts(Y_vintage))
+
+noos=50
+
+Y2_vintage=as.matrix(Y_vintage[1:(size-50),])
+ar1=arp.rolling.window(Y_vintage,noos,1,1) #1-step POOS AR(1) forecast
+ar2=arp.rolling.window(Y_vintage,noos,2,1) #1-step POOS AR(2) forecast
+ar3=arp.rolling.window(Y_vintage,noos,3,1) #1-step POOS AR(3) forecast
+ar4=arp.rolling.window(Y_vintage,noos,4,1) #1-step POOS AR(4) forecast
+
+ar1$errors[1]
+ar2$errors[1]
+ar3$errors[1]
+ar4$errors[1]
+
+
+
+
+
+```
+
+
+
+```{r}
+
+folder_path <- ("../data/QD-Vintages")
+csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+combined_data <- list()
+for(file in csv_files){
+  df <- read_csv(file)
+  
+  column_data <-df$HOUST
+  
+  combined_data <- append(combined_data,list(column_data))
+  
+}
+combined_data <- lapply(combined_data, function(x) x[-c(1, 2)])
+
+combined_data[[50]] <- as.numeric (combined_data[[50]][-1])
+
+quarterly_series_houst <-lapply (combined_data,function(col){
+  cleaned_data <-na.omit(col)
+  ts(cleaned_data,start=c(1959,1),frequency=4)
+}
+)
+
+start_year <-2018
+end_year<-2024
+
+months <- format(seq(from=as.Date("2018-05-01"),to=as.Date("2025-01-01"),by="month"),"%Y-%m")
+
+
+names(quarterly_series_houst) <-months[1:81]
+
+
+fitARp_ADL=function(X,Y,p,h){
+  
+  #Inputs: Y- predicted variable,  p - AR order, h -forecast horizon
+  
+  
+  auxY=embed(Y,p+h) #create p lags + forecast horizon shift (=h option)
+  auxX=embed(X,p+h)
+  y=auxY[,1] #  Y variable aligned/adjusted for missing data due to lags
+  X=auxX[,1]
+  # lags of Y (predictors) corresponding to forecast horizon (prevent leakage)  
+  Y_horizon=as.matrix(auxY[,-c(1:(ncol(Y)*h))])
+  X_horizon=as.matrix(auxX[,-c(1:(ncol(X)*h))])
+  
+  
+   if(h==1){ 
+    Y_horizon.out=tail(auxY,1)[1:ncol(Y)]
+    X_horizon.out=tail(auxX,1)[1:ncol(Y)]
+    #retrieve last p observations if one-step forecast 
+  }else{
+    Y_horizon.out=auxY[,-c(1:(ncol(Y)*(h-1)))]
+    X_horizon.out=auxX[,-c(1:(ncol(Y)*(h-1)))]#delete first (h-1) columns of aux,  
+    Y_horizon.out=tail(Y_horizon.out,1)[1:ncol(Y_horizon)]
+    X_horizon.out=Tail(X_horizon.out,1)[1:ncol(X_horizon)]#last p observations to predict T+1 
+  }
+  
+arp.rolling.window.ADL=function(X,Y,noos,p=1,h=1){ #equality here  means deafult inputs
+  
+  save.coef=matrix(NA,noos,p+1) #blank matrix for coefficients at each iteration (constant+ p lags)
+  save.pred=matrix(NA,noos,1) #blank for forecasts
+  for(i in noos:1){  #NB: backwards FOR loop: going from noos down to 1
+    
+    Y.window=Y[(1+noos-i):(nrow(Y)-i),] #define the estimation window 
+    Y.window=as.matrix(Y.window)
+    winfit=fitARp_ADL(X,Y.window,p,h) #call the function to fit the AR(p) and generate h-step forecast
+    save.coef[(1+noos-i),]=winfit$coef #save estimated coefficients
+    save.pred[(1+noos-i),]=winfit$pred #save the forecast
+    #cat("iteration",(1+noos-i),"\n") #display iteration number (useful for slower ML methods)
+  }
+  
+  #Some useful post-prediction misc stuff:
+  real=Y #get actual values
+  plot(real,type="l")
+  lines(c(rep(NA,length(real)-noos),save.pred),col="red") #padded with NA for blanks, plot predictions vs. actual
+  
+  rmse=sqrt(mean((tail(real,noos)-save.pred)^2)) #compute RMSE
+  mae=mean(abs(tail(real,noos)-save.pred)) #compute MAE (Mean Absolute Error)
+  errors=c("rmse"=rmse,"mae"=mae) #stack errors in a vector
+  
+  return(list("pred"=save.pred,"coef"=save.coef,"errors"=errors)) #return forecasts, history of estimated coefficients, and RMSE and MAE for the period.
+}
+  
+  model=lm(y~Y_horizon+X_horizon) #estimate direct h-step AR(p) by OLS 
+  coef=coef(model) #extract coefficients
+  
+  
+  
+  pred=c(1,Y_horizon.out)%*%coef #make a forecast using the last few observations: a direct h-step forecast.
+  #note the addition of a constant to the test observation vector
+  
+  rmsfe=sqrt(sum(model$residuals^2)/nrow(Y_horizon)) #get unadjusted rmsfe (ignoring estimation uncertainty)
+  
+  return(list("model"=model,"pred"=pred,"coef"=coef, "rmsfe"=rmsfe)) #save estimated AR regression, prediction, and estimated coefficients
+}
+
+
+```
