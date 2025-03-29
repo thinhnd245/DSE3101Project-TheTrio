@@ -5,15 +5,31 @@ library(shiny)
 # Define UI for application that draws a histogram
 navbarPage(
   # Application title
-  title = "Testing App",
-  # Dataset Panel
-  tabPanel("Dataset",
-           
-           
+  title = "DEMO",
+  # Data Page
+  tabPanel(h4("Datasets"),
+          #Setting for upload the data
            sidebarLayout(
-             sidebarPanel(width = 3,
-                          fileInput("file", "Upload your data", accept = c(".csv", ".xlsx", "xls", ".json")),
-                          checkboxInput("default_dataset", "Use Default Dataset", FALSE),
+             sidebarPanel(h3("Data Options"), width = 3,
+                          selectInput("data_source", "Select Data Source:",
+                                      choices = c("FED Quarterly Data" = "quarterly",
+                                                  "FED Monthly Data" = "monthly",
+                                                  "Upload Data" = "upload")),
+                          conditionalPanel(
+                            condition = "input.data_source == 'upload'",
+                            helpText(HTML(
+                              "<b>Note:</b> Uploaded data should be in format used by the 
+     <a href=https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/real-time-data-set-for-macroeconomists target='_blank'>
+     FED Real-Time Data</a>."
+                            ))
+                          ),
+                          
+                          # Show fileInput only when "upload" is selected
+                          conditionalPanel(
+                            condition = "input.data_source == 'upload'",
+                            fileInput("file", "Upload Your Dataset:",
+                                      accept = c(".csv", ".xlsx", ".xls", ".json"))
+                          ),
                           sliderInput(inputId = "year", label = "Select Year", 
                                       min = 1965, max = 2025, value = 1965),
                           selectInput(inputId = "quarter", label = "Select Quarter", 
@@ -26,7 +42,7 @@ navbarPage(
              
              mainPanel(width = 9,
                        tabsetPanel(
-                         tabPanel("Data Preview", DTOutput("dataset")),
+                         tabPanel("Preview", DTOutput("data_preview")),
                          tabPanel("Plot"),
                          
                          tabPanel("Stats")
@@ -39,6 +55,8 @@ navbarPage(
   tabPanel("Model",
            sidebarLayout(
              sidebarPanel(width = 3,
+                          selectInput(inputId = "model", label = "Select Model", choices = c("AR", "ADL")),
+                          
                           sliderInput(inputId = "year", label = "Select Year", 
                                       min = 1965, max = 2025, value = 1965),
                           selectInput(inputId = "quarter", label = "Select Quarter", 
@@ -57,7 +75,16 @@ navbarPage(
                        ))
            )
   ),
-  tabPanel("Comparison"),
+  tabPanel("Comparison",
+           sidebarLayout(
+             sidebarPanel(width = 3,
+                          selectInput(inputId = "model1", label = "Select Model 1", choices = c("Model A", "Model B", "Model C"),
+                                      selected = "Model A"),
+                          selectInput(inputId = "model2", label = "Select Model 2", choices = c("Model A", "Model B", "Model C"),
+                                      selected = "Model B")
+                          ),
+             mainPanel(width = 9)
+           )),
   tabPanel("About")
 )
 
