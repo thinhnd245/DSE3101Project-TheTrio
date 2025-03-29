@@ -3,6 +3,8 @@ library(stringr)
 library(readxl)
 library(shiny)
 library(tools)
+library(lubridate)
+library(dint)
 
 function(input, output) {
   
@@ -22,7 +24,8 @@ function(input, output) {
     } else if (str_detect(first_col, "Q\\d$")) {
       return("quarterly")
     } else {
-      return("unknown")
+      stop("Unsupported Uploaded File!")
+      
     }
   }
   ## Get the right century for the year
@@ -47,9 +50,9 @@ function(input, output) {
   }
   
   ## Clean the quarter data
-  clean_data <- function(data, vintage_freq = "quarterly") {
+  clean.data <- function(data, vintage_freq = "quarterly") {
     
-    q <- names(data)[-1] %>% str_remove(pattern = "ROUTPUT") %>% str_sub(start = 3, end = 4)
+    q <- names(data)[-1] %>% str_remove(pattern = "ROUTPUT") %>% str_sub(start = 1)
     clean_cols <- paste0(clean_columns(data), q)
     names(data)[-1] <- clean_cols
     total_col <- length(names(data))
@@ -59,20 +62,21 @@ function(input, output) {
       pivot_longer(cols = -1, names_to = "vintage", values_to = "gdp") %>%
       mutate(year = str_sub(DATE, 1,4),
              quarter = str_sub(DATE, 7,7), 
-             v_year = str_sub(vintage, 1,4)) %>%
+             v_year = str_sub(vintage, 1,4),
+             log_gdp = log(gdp)) %>%
       drop_na()
     
     if (vintage_freq == "quarterly") {
       final_data <- clean_data %>% 
         mutate(v_quarter = str_extract(vintage, pattern = "(?<=Q).*$")) %>%
-        select(year, quarter, v_year, v_quarter, gdp) %>%
-        mutate(across(1:5, as.numeric))
+        select(year, quarter, v_year, v_quarter, gdp, log_gdp) %>%
+        mutate(across(1:6, as.numeric))
     }
     else {
       final_data <- clean_data %>%
         mutate(v_month = str_extract(vintage, pattern = "(?<=M).*$")) %>%
-        select(year, quarter, v_year, v_month, gdp) %>%
-        mutate(across(1:5, as.numeric))
+        select(year, quarter, v_year, v_month, gdp, log_gdp) %>%
+        mutate(across(1:6, as.numeric))
     }
     
     
@@ -87,7 +91,7 @@ function(input, output) {
   }
   
   ### Data ###
-
+  ## Preview 
   raw_data <- reactive({
     if (input$data_source == "quarterly") {
       readxl::read_excel("../data/ROUTPUTQvQd.xlsx")
@@ -123,13 +127,92 @@ function(input, output) {
     req(raw_data())
     raw_dat <- raw_data()
     freq <-  detect_frequency(raw_dat)
-    clean_data(raw_data(), freq)
+    temp <- clean.data(raw_data(), freq) 
+    })
+  
+  data_frequency <- reactive({
+    req(raw_data())
+    detect_frequency(raw_data())
+  })
+  
+  
+  filtered_data <- reactive({
+    if (data_frequency() == "quarterly") {
+      cleaned_data() %>% filter(v_year ==input$vintage_year,
+                      v_quarter == input$vintage_period)
+    }
+    else if (data_frequency() == "monthly") {
+      cleaned_data() %>% filter(v_year == input$vintage_year,
+                      v_month == input$vintage_period)
+    }
+    
     
   })
-  output$data_preview <- DT::renderDataTable({
-    DT::datatable(cleaned_data())
+   
+  
+  output$vintage_period_ui <- renderUI({
+    req(data_frequency())
+    
+    if (data_frequency() == "quarterly") {
+      selectInput("vintage_period", "Select Quarter:", choices = 1:4, selected = 1)
+    } else if (data_frequency() == "monthly") {
+      selectInput("vintage_period", "Select Month:", choices = 1:12, selected = 1)
+    }
+  })
+  gdp <- reactive({
+    filtered_data() %>% select(-log_gdp) 
+    
+    
+  })
+  log_gdp <- reactive({
+    filtered_data() %>% select(-gdp)
   })
   
   
-  # Model Tab
+  output$data_preview <- DT::renderDataTable({
+    
+    if (input$log_transform) {
+      DT::datatable(log_gdp())
+    }
+    else {
+      DT::datatable(gdp())
+    }
+  
+  })
+  
+  ## Plot
+  
+  gdp_plot <- reactive({
+    temp_dat <- gdp() 
+    ggplot(data = temp_dat, mapping = aes(x = date_yq(year,quarter), y = gdp)) +
+    scale_x_date_yq(labels = function(x) format(x, "%Y Q%q"))  +
+    geom_line() +
+    theme_bw()
+    
+  })
+  log_gdp_plot <- reactive({
+    temp_dat <- log_gdp() 
+    ggplot(data = temp_dat, mapping = aes(x = date_yq(year,quarter), y = log_gdp)) +
+    scale_x_date_yq(labels = function(x) format(x, "%Y Q%q")) + 
+    geom_line() +
+    theme_bw()
+  })
+  output$data_plot <- renderPlotly({
+    if (input$log_transform) {
+      log_gdp_plot()
+    }
+    else if (!input$log_transform) {
+      gdp_plot()
+    }
+    
+  })
+  
+  ## Stats
+  
+  
+  ############
+  # Model Tab #
+  ############
+  
+  
 }

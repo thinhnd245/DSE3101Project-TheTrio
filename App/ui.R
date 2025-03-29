@@ -30,21 +30,19 @@ navbarPage(
                             fileInput("file", "Upload Your Dataset:",
                                       accept = c(".csv", ".xlsx", ".xls", ".json"))
                           ),
-                          sliderInput(inputId = "year", label = "Select Year", 
-                                      min = 1965, max = 2025, value = 1965),
-                          selectInput(inputId = "quarter", label = "Select Quarter", 
-                                      choices = c(1,2,3,4), selected = 1),
-                          sliderInput(inputId = "vintage_year", label = "Select Vintage Year", 
+                          checkboxInput("log_transform", "Log-transform GDP", value = FALSE),
+                          numericInput(inputId = "vintage_year", label = "Select Vintage Year", 
                                       min = 1965, max = 2025, value = 2000),
-                          selectInput(inputId = "vintage_quarter", label = "Select Vintage Quarter", 
-                                      choices = c(1,2,3,4), selected = 1)
+                          uiOutput("vintage_period_ui")
              ),
              
              mainPanel(width = 9,
                        tabsetPanel(
-                         tabPanel("Preview", DTOutput("data_preview")),
-                         tabPanel("Plot"),
-                         
+                        
+                         tabPanel("Preview", 
+                                  DTOutput("data_preview")),
+                         tabPanel("Plot",
+                                  plotlyOutput("data_plot")),
                          tabPanel("Stats")
                        )
              )
@@ -52,19 +50,12 @@ navbarPage(
   ),
   
   #Model Panel
-  tabPanel("Model",
+  tabPanel(h4("Model"),
            sidebarLayout(
              sidebarPanel(width = 3,
-                          selectInput(inputId = "model", label = "Select Model", choices = c("AR", "ADL")),
+                          selectInput(inputId = "model", label = "Select Model", choices = c("AR", "ADL"))
                           
-                          sliderInput(inputId = "year", label = "Select Year", 
-                                      min = 1965, max = 2025, value = 1965),
-                          selectInput(inputId = "quarter", label = "Select Quarter", 
-                                      choices = c(1,2,3,4), selected = 1),
-                          sliderInput(inputId = "vintage_year", label = "Select Vintage Year", 
-                                      min = 1965, max = 2025, value = 2000),
-                          selectInput(inputId = "vintage_quarter", label = "Select Vintage Quarter", 
-                                      choices = c(1,2,3,4), selected = 1)
+                         
              ),
              
              mainPanel(width = 9,
