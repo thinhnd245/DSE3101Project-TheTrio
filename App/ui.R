@@ -53,17 +53,38 @@ navbarPage(
   tabPanel(h4("Model"),
            sidebarLayout(
              sidebarPanel(width = 3,
-                          selectInput(inputId = "model", label = "Select Model", choices = c("AR", "ADL"))
+                          titlePanel("Model Setting:"),
+                          selectInput(inputId = "model", label = "Select Model", 
+                                      choices = c("Autoregressive (AR)" = "AR", 
+                                                  "Autoregressive Distributed Lag (ADL)" = "ADL")),
+                          radioButtons("estimation_mode", "Choose Mode:",
+                                       choices = c("Optimized" = "optimized", "Customize" = "custom")),
+                          
+                          conditionalPanel(
+                            condition = "input.model == 'AR' && input.estimation_mode == 'custom'",
+                            
+                            
+                            numericInput(inputId = "ar_lag", "Select AR lag p", min = 0, max = 12, value = 2),
+                    
+                          ), 
+                          titlePanel("Training Setting:"), 
+            
+                          numericInput("forecast_h", "Forecast Horizon (h):", value = 1, min = 1),
+                          numericInput("noos", "Out-of-Sample Period (noos):", value = 1, min = 1),
+                          actionButton("run_model", "Run AR Forecast")
                           
                          
              ),
              
              mainPanel(width = 9,
+                       
                        tabsetPanel(
-                         tabPanel("Summary", tableOutput("summary_arima")),
-                         tabPanel("Plot"),
-                         tabPanel("Performance")
-                       ))
+                           tabPanel("Forecast Plot", plotOutput("ar_plot")),
+                           tabPanel("Model Summary", verbatimTextOutput("ar_summary")),
+                           tabPanel("Test", tableOutput("fc"))
+                         )
+                         
+                       )
            )
   ),
   tabPanel("Comparison",
