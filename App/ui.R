@@ -13,12 +13,12 @@ navbarPage(
              sidebarPanel(h3("Data Options"), width = 3,
                           selectInput("data_source", "Select Data Source:",
                                       choices = c("FED Quarterly Data" = "quarterly",
-                                                  "FED Monthly Data" = "monthly",
+                                                  
                                                   "Upload Data" = "upload")),
                           conditionalPanel(
                             condition = "input.data_source == 'upload'",
                             helpText(HTML(
-                              "<b>Note:</b> Uploaded data should be in format used by the 
+                              "<b>Note:</b> Uploaded data should be quarterly data in format used by the 
      <a href=https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/real-time-data-set-for-macroeconomists target='_blank'>
      FED Real-Time Data</a>."
                             ))
@@ -30,10 +30,13 @@ navbarPage(
                             fileInput("file", "Upload Your Dataset:",
                                       accept = c(".csv", ".xlsx", ".xls", ".json"))
                           ),
-                          checkboxInput("log_transform", "Log-transform GDP", value = FALSE),
-                          numericInput(inputId = "vintage_year", label = "Select Vintage Year", 
-                                      min = 1965, max = 2025, value = 2000),
-                          uiOutput("vintage_period_ui")
+                          checkboxInput("growth_transform", "Growth", value = FALSE),
+                          numericInput(inputId = "vintage_year", label = "Select Starting Year", 
+                                      min = 1965, max = 2024, value = 2000),
+                          
+                          uiOutput("vintage_period_ui"),
+                          uiOutput("end_year_ui"),
+                          uiOutput("end_quarter_ui")
              ),
              
              mainPanel(width = 9,
@@ -43,7 +46,11 @@ navbarPage(
                                   DTOutput("data_preview")),
                          tabPanel("Plot",
                                   plotlyOutput("data_plot")),
-                         tabPanel("Stats")
+                         tabPanel("Stats",
+                                  verbatimTextOutput('test3')),
+                         tabPanel("Futasasd",
+                                  tableOutput('test4'))
+                         
                        )
              )
            )
@@ -53,25 +60,19 @@ navbarPage(
   tabPanel(h4("Model"),
            sidebarLayout(
              sidebarPanel(width = 3,
-                          titlePanel("Model Setting:"),
-                          selectInput(inputId = "model", label = "Select Model", 
-                                      choices = c("Autoregressive (AR)" = "AR", 
-                                                  "Autoregressive Distributed Lag (ADL)" = "ADL")),
-                          radioButtons("estimation_mode", "Choose Mode:",
-                                       choices = c("Optimized" = "optimized", "Customize" = "custom")),
-                          
-                          conditionalPanel(
-                            condition = "input.model == 'AR' && input.estimation_mode == 'custom'",
-                            
-                            
-                            numericInput(inputId = "ar_lag", "Select AR lag p", min = 0, max = 12, value = 2),
-                    
-                          ), 
-                          titlePanel("Training Setting:"), 
-            
-                          numericInput("forecast_h", "Forecast Horizon (h):", value = 1, min = 1),
-                          numericInput("noos", "Out-of-Sample Period (noos):", value = 1, min = 1),
-                          actionButton("run_model", "Run AR Forecast")
+                          titlePanel("Model Selection"),
+                          actionButton("add_model", "+ Add a Model"),
+                          br(), br(),
+                          uiOutput("all_models_ui"),
+                          titlePanel("Features Selection"), 
+                          actionButton("add_feature", "+ Add a Feature"),
+                          uiOutput("all_features_ui"),
+                          br(), br(),
+                          titlePanel("Forecast Setting"),
+                          numericInput(inputId = 'forecast_horizon', label = "Select Forecast Horizon", max = 12, min = 1,value = 1),
+                          numericInput(inputId = 'window', label = 'Select Rolling Window', min = 100, value = 50),
+      
+                          actionButton("run_model", "Run All Models")
                           
                          
              ),
@@ -79,9 +80,8 @@ navbarPage(
              mainPanel(width = 9,
                        
                        tabsetPanel(
-                           tabPanel("Forecast Plot", plotOutput("ar_plot")),
-                           tabPanel("Model Summary", verbatimTextOutput("ar_summary")),
-                           tabPanel("Test", tableOutput("fc"))
+                           tabPanel("Model Forecast", uiOutput('testtable')),
+                           tabPanel("Visualization", plotOutput('testplot'))
                          )
                          
                        )
