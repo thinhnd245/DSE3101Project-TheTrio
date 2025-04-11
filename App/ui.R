@@ -47,9 +47,9 @@ navbarPage(
                          tabPanel("Plot",
                                   plotlyOutput("data_plot")),
                          tabPanel("Stats",
-                                  verbatimTextOutput('test3')),
+                                  verbatimTextOutput('test1')),
                          tabPanel("Futasasd",
-                                  tableOutput('test4'))
+                                  tableOutput('test10'))
                          
                        )
              )
@@ -68,6 +68,7 @@ navbarPage(
                           actionButton("add_feature", "+ Add a Feature"),
                           uiOutput("all_features_ui"),
                           br(), br(),
+                          
                           titlePanel("Forecast Setting"),
                           numericInput(inputId = 'forecast_horizon', label = "Select Forecast Horizon", max = 12, min = 1,value = 1),
                           numericInput(inputId = 'window', label = 'Select Rolling Window', min = 100, value = 50),
@@ -81,7 +82,7 @@ navbarPage(
                        
                        tabsetPanel(
                            tabPanel("Model Forecast", uiOutput('testtable')),
-                           tabPanel("Visualization", plotOutput('testplot'))
+                           tabPanel("Model Comparison", uiOutput('comparison'))
                          )
                          
                        )

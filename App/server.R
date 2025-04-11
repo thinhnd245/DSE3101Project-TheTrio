@@ -528,14 +528,14 @@ function(input, output, session) {
           select(year,quarter, cur_forecast, latest_forecast, latest_growth)
             
         
-        #knn_performance_df <- knn_result_df %>% 
-        #    summarize(cur_mae = mean(abs(cur_forecast - latest_vintage)),
-        #              cur_rmse = sqrt(mean((cur_forecast - latest_vintage)^2)),
-        #              latest_mae = mean(abs(latest_forecast - latest_vintage)),
-        #             latest_rmse = sqrt(mean((latest_forecast - latest_vintage)^2))) 
+        knn_performance_df <- knn_result_df %>% 
+            summarize(cur_mae = mean(abs(cur_forecast - latest_growth)),
+                      cur_rmse = sqrt(mean((cur_forecast - latest_growth)^2)),
+                      latest_mae = mean(abs(latest_forecast - latest_growth)),
+                     latest_rmse = sqrt(mean((latest_forecast - latest_growth)^2))) 
         model_lst <- append(model_lst, list(model_type))
         res_lst <- append(res_lst, list(knn_result_df))
-        #per_lst[[length(per_lst) + 1]] <- knn_performance_df
+        per_lst <- append(per_lst, list(knn_performance_df))
         
         #performance(per_lst)
         
@@ -555,20 +555,65 @@ function(input, output, session) {
         for (feature_transform in feature_transform_series()) {
           feature_transforms <- c(feature_transforms, feature_transform)
         }
-        adl_result_df <- run_adl_model(h = 1, features = "AAA", lag_y = 1, lags = 1,units = "lin") 
-        #per_df <- result_df %>% select(year,quarter, cur_mae, cur_mse, latest_mae, latest_mse)
+        adl_result_df <- run_adl_model(h = h, features = features, lag_y = ylag_input_adl, lags = feature_lags,units = feature_transforms) %>% 
+          rename("latest_growth" = "value") 
+        adl_per_df <- adl_result_df %>% summarize(cur_mae = mean(abs(cur_pred - latest_growth)),
+                                      latest_mae = mean(abs(latest_pred - latest_growth)),
+                                      cur_rmse = sqrt(mean((cur_pred - latest_growth)^2)), 
+                                      latest_rmse =sqrt(mean((latest_pred - latest_growth)^2))) 
+                                      
+        
         model_lst <- append(model_lst, list(model_type))
         res_lst <- append(res_lst, list(adl_result_df))
-        #per_lst[[length(per_lst) + 1]] <- per_df
+        per_lst <- append(per_lst, list(adl_per_df))
         
       }
       
-      if (model_type == "Autoregressive") {
+      if (model_type == "AR") {
+        ylag_input_ar <- input[[paste0("ylag_ar_", i)]]
+        ar_result_df <- run_ar(h = h, p = ylag_input_ar)
+        ar_per_df <- ar_result_df %>% summarize(cur_mae = mean(abs(cur_pred - latest_growth)),
+                                                  latest_mae = mean(abs(latest_pred - latest_growth)),
+                                                  cur_rmse = sqrt(mean((cur_pred - latest_growth)^2)), 
+                                                  latest_rmse =sqrt(mean((latest_pred - latest_growth)^2)))
+        
+        model_lst <- append(model_lst, list(model_type))
+        res_lst <- append(res_lst, list(ar_result_df))
+        per_lst <- append(per_lst, list(ar_per_df))
+        
      
       }
     }
     modeltype(model_lst)
     results(res_lst)
+    modeltype(model_lst)
+    results(res_lst)
+    
+    # Combine and rank performance
+    perf_df <- do.call(rbind, lapply(seq_along(per_lst), function(i) {
+      df <- per_lst[[i]]
+      model <- model_lst[[i]]
+      data.frame(
+        model = model,
+        cur_rmse = df$cur_rmse[1],
+        cur_mae = df$cur_mae[1],
+        latest_rmse = df$latest_rmse[1],
+        latest_mae = df$latest_mae[1]
+      )
+    }))
+    
+    # Create ranking dataframes
+    rank_cur <- perf_df %>%
+      arrange(cur_rmse) %>%
+      mutate(rank = row_number()) %>%
+      select(rank, model, cur_rmse, cur_mae)
+    
+    rank_latest <- perf_df %>%
+      arrange(latest_rmse) %>%
+      mutate(rank = row_number()) %>%
+      select(rank, model, latest_rmse, latest_mae)
+    
+    performance(list(cur = rank_cur, latest = rank_latest))
 
   })
   output$testtable <- renderUI({
@@ -595,6 +640,27 @@ function(input, output, session) {
 
   do.call(tagList, output_list)
 })
+  
+  output$comparison <- renderUI({
+    req(performance())
+    
+    output$cur_perf_table <- DT::renderDataTable({
+      performance()$cur
+    })
+    
+    output$latest_perf_table <- DT::renderDataTable({
+      performance()$latest
+    })
+    
+    tagList(
+      h3("Model Performance Comparison"),
+      tabsetPanel(
+        tabPanel("Current Forecast", DT::DTOutput("cur_perf_table")),
+        tabPanel("Latest Forecast", DT::DTOutput("latest_perf_table"))
+      )
+    )
+  })
+
   
   
   ts_transform <- function(data) {
@@ -910,12 +976,37 @@ function(input, output, session) {
     
     return(list("model"=model,"pred"=pred,"coef"=coef, "rmsfe"=rmsfe)) #save estimated AR regression, prediction, and estimated coefficients
   }
-  run_ar <- function(h, p, v_year1, v_quarter1) {
-    Y <- as.matrix(cleaned_data() %>% filter(v_year == v_year1, v_quarter == v_quarter1) %>% 
-                     select(log_current_vintage) %>% pull(log_current_vintage))
-    model <- fitARp(Y = Y, p = p, h = h)
-    pred <- model$pred[1]
+  run_ar <- function(h, p) {
+    results <- data.frame('year' = numeric(0),
+                          'quarter' = numeric(0),
+                          'cur_pred' = numeric(0),
+                          'latest_pred' = numeric(0),
+                          'latest_growth' = numeric(0))
+                          
+    
+    for (i in 1:nrow(forecast_list())) {
+      item <- forecast_list()[i,]
+      year_f <- item$year
+      quarter_f <- item$quarter 
+      final_data <- filter_function(v_year1 = year_f, v_quarter1 = quarter_f) %>%
+        select(year, quarter, current_growth) %>% right_join(latest_vintage_data(), by = c('year', 'quarter')) %>% 
+        filter(year >= 1965, year <= year_f) %>% drop_na() %>%
+        select(year,quarter, current_growth, latest_growth) 
+      Y_cur <- as.matrix(final_data %>% pull(current_growth))
+      Y_latest <- as.matrix(final_data %>% pull(latest_growth))
+      model_cur <- fitARp(Y = Y_cur, p = p, h = h)
+      model_latest <- fitARp(Y = Y_latest, p = p, h = h)
+      pred_cur <- model_cur$pred[1]
+      pred_latest <- model_latest$pred[1]
+      result_df <- data.frame("year" = year_f, "quarter" = quarter_f, "cur_pred" = pred_cur, "latest_pred" = pred_latest)
+      result_df <- result_df %>% left_join(actual_data(), by = c("year", "quarter")) %>% rename("latest_growth" ="value")
+      results <- rbind(results, result_df)
+    }
+    return(results)
   }
+    output$test10 <- renderTable({
+      run_ar(1,2)
+    })
 
   
   
