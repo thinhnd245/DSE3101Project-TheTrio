@@ -241,29 +241,58 @@ function(input, output, session) {
   
   gdp_plot <- reactive({
     filtered_data() %>% filter(year >= 1965) %>% select(year,quarter, current_vintage, latest_vintage) %>%
-      ggplot(mapping = aes(x = as.Date(zoo::as.yearqtr(paste0(year, " Q", quarter))))) +
-      geom_line(mapping = aes(y = current_vintage), color = "blue") +
-      geom_line(mapping = aes(y = latest_vintage), color = "indianred") +
+      pivot_longer(`current_vintage`:`latest_vintage`, names_to = "type", values_to = "value") %>%
+      ggplot(mapping = aes(y = value, x = as.Date(zoo::as.yearqtr(paste0(year, " Q", quarter))),color = type)) +
+      geom_line(size = 1) +
       scale_x_date(labels = function(x) zoo::format.yearqtr(x, "%YQ%q"))  +
-      labs(x = "") +
-      theme_classic()
+      scale_color_manual(
+        values = c("current_vintage" = "cyan3", "latest_vintage" = "indianred"),
+        labels = c("Current Vintage", "Latest Vintage"),
+        name = ""
+      ) +
+      
+      labs(
+        title = "Real-Time GDP Level Over Time",
+        x = "",
+        y = "GDP Level"
+      ) + 
+      theme_classic() +
+      theme(
+        legend.position = "top",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 11)
+      )
+      
     
   })
   growth_plot <- reactive({
     filtered_data() %>% filter(year >= 1965) %>% select(year, quarter, current_growth, latest_growth) %>%
-    ggplot(mapping = aes(y = latest_growth, x = as.Date(zoo::as.yearqtr(paste0(year, " Q", quarter))))) +
-      geom_line(mapping = aes(y = current_growth), color = "blue", show.legend =TRUE) +
-      geom_line(mapping = aes(y = latest_growth), color = "indianred", show.legend = TRUE) + 
+      pivot_longer(`current_growth`:`latest_growth`, names_to = "type", values_to = "value") %>%
+    ggplot(mapping = aes(y = value, x = as.Date(zoo::as.yearqtr(paste0(year, " Q", quarter))),color = type)) +
+      geom_line(size = 1, show.legend =TRUE) + 
       scale_x_date(labels = function(x) zoo::format.yearqtr(x, "%YQ%q")) + 
-      labs(x = "") +
-      theme_classic()
+      scale_color_manual(
+        values = c("current_growth" = "cyan3", "latest_growth" = "indianred"),
+        labels = c("Current Vintage", "Latest Vintage"),
+        name = ""
+      ) +
+      labs(
+        title = "Real-Time GDP Growth Over Time",
+        x = "",
+        y = "GDP Growth (%)") + 
+      theme_classic()  +
+      theme(
+        legend.position = "top",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 11)
+      )
   })
-  output$data_plot <- renderPlotly({
+  output$data_plot <- renderPlot({
     if (input$growth_transform) {
-      growth_plot()
+     growth_plot()
     }
     else if (!input$growth_transform) {
-      gdp_plot()
+      gdp_plot() 
     }
     
   })
@@ -436,7 +465,7 @@ function(input, output, session) {
         h4(paste("Feature", i)),
         textInput(paste0("feature_id_", i), label = "Feature Series ID"),
         numericInput(paste0("feature_lag_id_", i), label = "Lags (optional)", value = 1, min = 1, max = 5),
-        textInput(paste0("feature_transform_id_", i), label = "Transformation (optional)"),
+        textInput(paste0("feature_transform_id_", i), label = "Transformation (optional)", value = "lin"),
         actionButton(paste0("delete_feature_", i), "Delete", class = "btn-danger")
       )
     }) %>% tagList()
@@ -525,24 +554,30 @@ function(input, output, session) {
         
         knn_result_df <- recursive_prediction_knn(h = h, k = k, cf = cf) %>% 
           left_join(latest_vintage_data(), by = c('year', 'quarter')) %>%
-          select(year,quarter, cur_forecast, latest_forecast, latest_growth)
+          select(year,quarter, cur_forecast, latest_forecast, latest_growth) %>%
+          rename("cur_pred" = "cur_forecast",
+                 "latest_pred" = "latest_forecast")
             
         
         knn_performance_df <- knn_result_df %>% 
-            summarize(cur_mae = mean(abs(cur_forecast - latest_growth)),
-                      cur_rmse = sqrt(mean((cur_forecast - latest_growth)^2)),
-                      latest_mae = mean(abs(latest_forecast - latest_growth)),
-                     latest_rmse = sqrt(mean((latest_forecast - latest_growth)^2))) 
+            summarize(cur_mae = mean(abs(cur_pred - latest_growth)),
+                      cur_rmse = sqrt(mean((cur_pred - latest_growth)^2)),
+                      latest_mae = mean(abs(latest_pred - latest_growth)),
+                     latest_rmse = sqrt(mean((latest_pred - latest_growth)^2))) 
         model_lst <- append(model_lst, list(model_type))
         res_lst <- append(res_lst, list(knn_result_df))
         per_lst <- append(per_lst, list(knn_performance_df))
         
-        #performance(per_lst)
+        
         
       }
       
       else if (model_type == "ADL") {
         ylag_input_adl <- input[[paste0("ylag_adl_", i)]]
+        if (length(feature_series_ids()) == 0) {
+          showNotification("Please add a feature or use AR model instead.", type = "error")
+          return()
+        }
         features <- c()
         feature_lags <- c() 
         feature_transforms <- c()
@@ -616,7 +651,9 @@ function(input, output, session) {
     performance(list(cur = rank_cur, latest = rank_latest))
 
   })
-  output$testtable <- renderUI({
+  
+  
+  output$resulttable <- renderUI({
   req(results(), modeltype())
   req(length(results()) > 0)
 
@@ -640,7 +677,7 @@ function(input, output, session) {
 
   do.call(tagList, output_list)
 })
-  
+  ## Comparison Tab
   output$comparison <- renderUI({
     req(performance())
     
@@ -648,19 +685,108 @@ function(input, output, session) {
       performance()$cur
     })
     
+    
     output$latest_perf_table <- DT::renderDataTable({
       performance()$latest
     })
     
+    output$cur_perf_plot <- renderPlot({
+      cur_df <- performance()$cur
+      
+      cur_df_long <- tidyr::pivot_longer(
+        cur_df,
+        cols = c("cur_rmse", "cur_mae"),
+        names_to = "metric",
+        values_to = "value"
+      )
+      
+      ggplot(cur_df_long, aes(x = reorder(model, value), y = value, fill = metric)) +
+        geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.5) +
+        scale_fill_manual(values = c("cur_rmse" = "steelblue", "cur_mae" = "yellow2")) +
+        labs(
+          title = "Current Forecast: RMSE and MAE",
+          x = "Model",
+          y = "Error Value",
+          fill = "Metric"
+        ) +
+        theme_minimal() 
+        
+    })
+    
+    #Bar Chart: Latest Forecast
+    output$latest_perf_plot <- renderPlot({
+      latest_df <- performance()$latest
+      
+      latest_df_long <- tidyr::pivot_longer(
+        latest_df,
+        cols = c("latest_rmse", "latest_mae"),
+        names_to = "metric",
+        values_to = "value"
+      )
+      
+      ggplot(latest_df_long, aes(x = reorder(model, value), y = value, fill = metric)) +
+        geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.5) +
+        scale_fill_manual(values = c("latest_rmse" = "steelblue", "latest_mae" = "yellow2")) +
+        labs(
+          title = "Latest Forecast: RMSE and MAE",
+          x = "Model",
+          y = "Error Value",
+          fill = "Metric"
+        ) +
+        theme_minimal() 
+        
+    })
+    
     tagList(
-      h3("Model Performance Comparison"),
+      h5("Model Performance Comparison"),
+    
       tabsetPanel(
-        tabPanel("Current Forecast", DT::DTOutput("cur_perf_table")),
-        tabPanel("Latest Forecast", DT::DTOutput("latest_perf_table"))
+        tabPanel("Current Forecast", 
+                 plotOutput("cur_perf_plot"),
+                 DT::DTOutput("cur_perf_table")),
+        tabPanel("Latest Forecast", 
+                 plotOutput("latest_perf_plot"),
+                 DT::DTOutput("latest_perf_table"),)
       )
     )
   })
+  # Visualization Tab
+  output$modelplot <- renderUI({
+    req(results())
+    res <- results()
+    types <- modeltype()
+    
+    output_list <- lapply(seq_along(res), function(i) {
+      plot_id <- paste0("model_plot_", i)
+      
+      output[[plot_id]] <- renderPlot({
+        df <- res[[i]]
 
+        ggplot(df, aes(x = as.Date(zoo::as.yearqtr(paste0(df$year, " Q", df$quarter))))) +
+          geom_line(size = 1,aes(y = cur_pred, color = "Current Forecast")) +
+          geom_line(size = 1,aes(y = latest_pred, color = "Latest Forecast")) +
+          geom_line(size = 1,aes(y = latest_growth, color = "Actual Growth"), linetype = "dashed") +
+          scale_color_manual(values = c(
+            "Current Forecast" = "blue",
+            "Latest Forecast" = "indianred",
+            "Actual Growth" = "black")) +
+          scale_x_date(labels = function(x) zoo::format.yearqtr(x, "%YQ%q")) +
+          labs(
+            x = "Quarter", y = "GDP Growth (%)", color = NULL
+          ) +
+          theme_classic() +
+          theme(legend.position = "top")
+      })
+      
+      tagList(
+        h4(paste("Model", i, "-", types[[i]])),
+        plotOutput(plot_id),
+        tags$hr()
+      )
+    })
+    
+    do.call(tagList, output_list)
+  })
   
   
   ts_transform <- function(data) {
@@ -674,6 +800,8 @@ function(input, output, session) {
     ts(data$latest_growth, start = c(year,quarter), freq = 4, names = "latest_growth")
   }
   
+  
+  ########
   ## Count number of outofsample 
   noos_count <- reactive({
     count_oos_forecasts(start_year = as.numeric(input$vintage_year), start_quarter = as.numeric(input$vintage_period),
@@ -776,7 +904,7 @@ function(input, output, session) {
   
   
   
-  #######
+  ####### MODEL CONSTRUCTION #######
   
   
   
@@ -1010,7 +1138,7 @@ function(input, output, session) {
 
   
   
-  ### ADL model
+  ##### ADL model #####
   quarter_to_date <- function(year, quarter) {
     month_lookup <- c("01", "04", "07", "10")
     date_str <- paste0(year, "-", month_lookup[quarter], "-01")
@@ -1057,7 +1185,8 @@ function(input, output, session) {
                                                             v_quarter = 2,
                                                             
                                                             units = units[i]))
-      final_data <- final_data %>% full_join(latest_feature_data, by = c('year', 'quarter'))
+      final_data <- final_data %>% full_join(latest_feature_data, by = c('year', 'quarter')) %>% 
+        mutate(!!sym(features[i]) := ifelse(is.na(.data[[features[i]]]), 0, .data[[features[i]]]))
     }
     final_data <- final_data %>% filter(year >= 1963, year <= v_year2) 
      

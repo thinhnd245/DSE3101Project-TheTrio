@@ -1,13 +1,21 @@
 library(DT)
 library(plotly)
 library(shiny)
-
+library(shinythemes)
+library(bslib)
 # Define UI for application that draws a histogram
 navbarPage(
+  theme = bs_theme(
+    bootswatch = "journal",
+    primary = "gray",
+    base_font = font_google("Open Sans"),
+    heading_font = font_google("Poppins")
+  ),
+  
   # Application title
-  title = "DEMO",
+  title = "Real-Time GDP Forecasting",
   # Data Page
-  tabPanel(h4("Datasets"),
+  tabPanel(h6("Datasets"),
           #Setting for upload the data
            sidebarLayout(
              sidebarPanel(h3("Data Options"), width = 3,
@@ -45,11 +53,7 @@ navbarPage(
                          tabPanel("Preview", 
                                   DTOutput("data_preview")),
                          tabPanel("Plot",
-                                  plotlyOutput("data_plot")),
-                         tabPanel("Stats",
-                                  verbatimTextOutput('test1')),
-                         tabPanel("Futasasd",
-                                  tableOutput('test10'))
+                                  plotOutput("data_plot"))
                          
                        )
              )
@@ -57,7 +61,7 @@ navbarPage(
   ),
   
   #Model Panel
-  tabPanel(h4("Model"),
+  tabPanel(h6("Model"),
            sidebarLayout(
              sidebarPanel(width = 3,
                           titlePanel("Model Selection"),
@@ -71,7 +75,7 @@ navbarPage(
                           
                           titlePanel("Forecast Setting"),
                           numericInput(inputId = 'forecast_horizon', label = "Select Forecast Horizon", max = 12, min = 1,value = 1),
-                          numericInput(inputId = 'window', label = 'Select Rolling Window', min = 100, value = 50),
+                          
       
                           actionButton("run_model", "Run All Models")
                           
@@ -81,14 +85,15 @@ navbarPage(
              mainPanel(width = 9,
                        
                        tabsetPanel(
-                           tabPanel("Model Forecast", uiOutput('testtable')),
-                           tabPanel("Model Comparison", uiOutput('comparison'))
+                           tabPanel("Model Forecast", uiOutput('resulttable')),
+                           tabPanel("Model Comparison", uiOutput('comparison')),
+                           tabPanel("Visualization", uiOutput('modelplot'))
                          )
                          
                        )
            )
   ),
-  tabPanel("Comparison",
+  tabPanel(h6("Development"),
            sidebarLayout(
              sidebarPanel(width = 3,
                           selectInput(inputId = "model1", label = "Select Model 1", choices = c("Model A", "Model B", "Model C"),
@@ -97,7 +102,6 @@ navbarPage(
                                       selected = "Model B")
                           ),
              mainPanel(width = 9)
-           )),
-  tabPanel("About")
+           ))
 )
 
