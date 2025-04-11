@@ -85,23 +85,13 @@ navbarPage(
              mainPanel(width = 9,
                        
                        tabsetPanel(
-                           tabPanel("Model Forecast", uiOutput('resulttable')),
-                           tabPanel("Model Comparison", uiOutput('comparison')),
+                           tabPanel("Forecast", uiOutput('resulttable')),
+                           tabPanel("Comparison", uiOutput('comparison')),
                            tabPanel("Visualization", uiOutput('modelplot'))
                          )
                          
                        )
            )
-  ),
-  tabPanel(h6("Development"),
-           sidebarLayout(
-             sidebarPanel(width = 3,
-                          selectInput(inputId = "model1", label = "Select Model 1", choices = c("Model A", "Model B", "Model C"),
-                                      selected = "Model A"),
-                          selectInput(inputId = "model2", label = "Select Model 2", choices = c("Model A", "Model B", "Model C"),
-                                      selected = "Model B")
-                          ),
-             mainPanel(width = 9)
-           ))
+  )
 )
 

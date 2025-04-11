@@ -575,7 +575,7 @@ function(input, output, session) {
       else if (model_type == "ADL") {
         ylag_input_adl <- input[[paste0("ylag_adl_", i)]]
         if (length(feature_series_ids()) == 0) {
-          showNotification("Please add a feature or use AR model instead.", type = "error")
+          showNotification("Please add a feature for ADL or use AR model instead.", type = "error")
           return()
         }
         features <- c()
@@ -691,6 +691,7 @@ function(input, output, session) {
     })
     
     output$cur_perf_plot <- renderPlot({
+      req(length(performance()) > 0)
       cur_df <- performance()$cur
       
       cur_df_long <- tidyr::pivot_longer(
@@ -738,7 +739,7 @@ function(input, output, session) {
     })
     
     tagList(
-      h5("Model Performance Comparison"),
+      h6("Model Performance Comparison"),
     
       tabsetPanel(
         tabPanel("Current Forecast", 
@@ -802,7 +803,7 @@ function(input, output, session) {
   
   
   ########
-  ## Count number of outofsample 
+  ## Count number of outofsample and get the forecast_list(), which is all the quarter we are making forecast
   noos_count <- reactive({
     count_oos_forecasts(start_year = as.numeric(input$vintage_year), start_quarter = as.numeric(input$vintage_period),
                         end_year = as.numeric(input$end_year), end_quarter = as.numeric(input$end_quarter))})
