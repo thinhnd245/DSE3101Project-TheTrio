@@ -98,10 +98,10 @@ function(input, output, session) {
   ## Preview 
   raw_data <- reactive({
     if (input$data_source == "quarterly") {
-      readxl::read_excel("../data/ROUTPUTQvQd.xlsx")
+      readxl::read_excel("data/ROUTPUTQvQd.xlsx")
       
     } else if (input$data_source == "monthly") {
-      readxl::read_excel("../data/routputMvQd.xlsx")
+      readxl::read_excel("data/routputMvQd.xlsx")
       
     } else if (input$data_source == "upload") {
       req(input$file)
