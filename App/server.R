@@ -232,7 +232,7 @@ function(input, output, session) {
     }
     else {
       filtered_data() %>% filter(year >= 1965) %>% select(year,quarter, current_vintage, latest_vintage) %>%
-        rename("Year" = "year", "Quarter" = "quarter", "Current Vintage" = "current_vintage", "Latest Growth" = "latest_vintage")
+        rename("Year" = "year", "Quarter" = "quarter", "Current Vintage" = "current_vintage", "Latest Vintage" = "latest_vintage")
     }
     
   })
@@ -269,7 +269,7 @@ function(input, output, session) {
     filtered_data() %>% filter(year >= 1965) %>% select(year, quarter, current_growth, latest_growth) %>%
       pivot_longer(`current_growth`:`latest_growth`, names_to = "type", values_to = "value") %>%
     ggplot(mapping = aes(y = value, x = as.Date(zoo::as.yearqtr(paste0(year, " Q", quarter))),color = type)) +
-      geom_line(size = 1, show.legend =TRUE) + 
+      geom_line(alpha = 0.8, size = 1, show.legend =TRUE) + 
       scale_x_date(labels = function(x) zoo::format.yearqtr(x, "%YQ%q")) + 
       scale_color_manual(
         values = c("current_growth" = "cyan3", "latest_growth" = "indianred"),
@@ -486,9 +486,9 @@ function(input, output, session) {
                   selectInput(paste0("knn_cf_", i), "CF", choices = c("mean","median", "weighted"), selected = "mean"))
           
         } else if (model_type == "AR") {
-          tagList(numericInput(paste0("ylag_ar_",i), "Enter how many lag for Y", value = 1))
+          tagList(numericInput(paste0("ylag_ar_",i), "Enter how many lag for Y", value = 1, min = 1))
         } else if (model_type == "ADL") {
-          tagList(numericInput(paste0("ylag_adl_",i), "Enter how many lag for Y", value = 2))
+          tagList(numericInput(paste0("ylag_adl_",i), "Enter how many lag for Y", value = 2, min = 1))
         }
       })
     })
@@ -560,10 +560,10 @@ function(input, output, session) {
             
         
         knn_performance_df <- knn_result_df %>% 
-            summarize(cur_mae = mean(abs(cur_pred - latest_growth)),
-                      cur_rmse = sqrt(mean((cur_pred - latest_growth)^2)),
-                      latest_mae = mean(abs(latest_pred - latest_growth)),
-                     latest_rmse = sqrt(mean((latest_pred - latest_growth)^2))) 
+            summarize(cur_mae = round(mean(abs(cur_pred - latest_growth)),2),
+                      cur_rmse = round(sqrt(mean((cur_pred - latest_growth)^2)),2),
+                      latest_mae = round(mean(abs(latest_pred - latest_growth)),2),
+                     latest_rmse = round(sqrt(mean((latest_pred - latest_growth)^2)),2)) 
         model_lst <- append(model_lst, list(model_type))
         res_lst <- append(res_lst, list(knn_result_df))
         per_lst <- append(per_lst, list(knn_performance_df))
@@ -592,10 +592,10 @@ function(input, output, session) {
         }
         adl_result_df <- run_adl_model(h = h, features = features, lag_y = ylag_input_adl, lags = feature_lags,units = feature_transforms) %>% 
           rename("latest_growth" = "value") 
-        adl_per_df <- adl_result_df %>% summarize(cur_mae = mean(abs(cur_pred - latest_growth)),
-                                      latest_mae = mean(abs(latest_pred - latest_growth)),
-                                      cur_rmse = sqrt(mean((cur_pred - latest_growth)^2)), 
-                                      latest_rmse =sqrt(mean((latest_pred - latest_growth)^2))) 
+        adl_per_df <- adl_result_df %>% summarize(cur_mae = round(mean(abs(cur_pred - latest_growth)),2),
+                                      latest_mae = round(mean(abs(latest_pred - latest_growth)),2),
+                                      cur_rmse = round(sqrt(mean((cur_pred - latest_growth)^2)),2), 
+                                      latest_rmse =round(sqrt(mean((latest_pred - latest_growth)^2)),2)) 
                                       
         
         model_lst <- append(model_lst, list(model_type))
@@ -607,10 +607,10 @@ function(input, output, session) {
       if (model_type == "AR") {
         ylag_input_ar <- input[[paste0("ylag_ar_", i)]]
         ar_result_df <- run_ar(h = h, p = ylag_input_ar)
-        ar_per_df <- ar_result_df %>% summarize(cur_mae = mean(abs(cur_pred - latest_growth)),
-                                                  latest_mae = mean(abs(latest_pred - latest_growth)),
-                                                  cur_rmse = sqrt(mean((cur_pred - latest_growth)^2)), 
-                                                  latest_rmse =sqrt(mean((latest_pred - latest_growth)^2)))
+        ar_per_df <- ar_result_df %>% summarize(cur_mae = round(mean(abs(cur_pred - latest_growth)),2),
+                                                  latest_mae = round(mean(abs(latest_pred - latest_growth)),2),
+                                                  cur_rmse = round(sqrt(mean((cur_pred - latest_growth)^2)),2), 
+                                                  latest_rmse =round(sqrt(mean((latest_pred - latest_growth)^2)),2))
         
         model_lst <- append(model_lst, list(model_type))
         res_lst <- append(res_lst, list(ar_result_df))
@@ -689,7 +689,7 @@ function(input, output, session) {
     output$latest_perf_table <- DT::renderDataTable({
       performance()$latest
     })
-    
+    # Bar Chart: Current Performance
     output$cur_perf_plot <- renderPlot({
       req(length(performance()) > 0)
       cur_df <- performance()$cur
@@ -716,6 +716,7 @@ function(input, output, session) {
     
     #Bar Chart: Latest Forecast
     output$latest_perf_plot <- renderPlot({
+      req(length(performance()) > 0)
       latest_df <- performance()$latest
       
       latest_df_long <- tidyr::pivot_longer(
@@ -977,11 +978,11 @@ function(input, output, session) {
   }
   get_feature_data <- function(series_id, v_year, v_quarter, units = 'lin') {
     result_df <- fredr_series_observations(series_id = series_id, 
-                                        observation_start = quarter_to_date(1947, 1), 
-                                        observation_end = quarter_to_date(2024,4),
+                                        #observation_start = quarter_to_date(1947, 1), 
+                                        #observation_end = quarter_to_date(2024,4),
                                         units = 'lin',
                                         frequency = 'q',
-                                        vintage_dates = quarter_to_date(v_year, v_quarter),
+                                        #vintage_dates = quarter_to_date(v_year, v_quarter),
                                         aggregation_method = 'avg')
     return(result_df)
   }
@@ -1061,11 +1062,6 @@ function(input, output, session) {
     }
   }
   
-  features <- c("AAA", "PCECTPI")
-  b <- reactive({get_lm_data(features = features,v_year1 = 2000, 
-                             v_quarter1 = 4, units = c("chg", "lin"))})
-  a <- reactive({prediction_lm(h = 2, data = b(), features, v_year1 = 2000, v_quarter1 = 4) 
-    })
   
   
   
@@ -1164,11 +1160,11 @@ function(input, output, session) {
   }
   get_feature_data <- function(series_id, v_year, v_quarter, units = 'lin') {
     result_df <- fredr_series_observations(series_id = series_id, 
-                                           observation_start = quarter_to_date(1963, 1), 
-                                           observation_end = quarter_to_date(2024,4),
+                                           #observation_start = quarter_to_date(1963, 1), 
+                                           #observation_end = quarter_to_date(2024,4),
                                            units = units,
                                            frequency = 'q',
-                                           vintage_dates = quarter_to_date(v_year, v_quarter),
+                                           #vintage_dates = quarter_to_date(v_year, v_quarter),
                                            aggregation_method = 'avg')
     return(result_df)
   }
@@ -1186,8 +1182,8 @@ function(input, output, session) {
                                                             v_quarter = 2,
                                                             
                                                             units = units[i]))
-      final_data <- final_data %>% full_join(latest_feature_data, by = c('year', 'quarter')) %>% 
-        mutate(!!sym(features[i]) := ifelse(is.na(.data[[features[i]]]), 0, .data[[features[i]]]))
+      final_data <- final_data %>% full_join(latest_feature_data, by = c('year', 'quarter')) %>%
+                    mutate(across(everything(), ~replace_na(.x, 0)))
     }
     final_data <- final_data %>% filter(year >= 1963, year <= v_year2) 
      
@@ -1231,7 +1227,7 @@ function(input, output, session) {
     
     
     #data <- data[, -c(5:(4+length(features)))]
-    data <- data %>% filter(year >= 1965)
+    data <- data %>% filter(year >= 1965) %>% mutate
     data <- data[1:n,]
   
     # Current Prediction
