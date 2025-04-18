@@ -69,6 +69,12 @@ navbarPage(
                           br(), br(),
                           uiOutput("all_models_ui"),
                           titlePanel("Features Selection"), 
+                          helpText(HTML(
+                            "<b>Note:</b> Please search for your interest feature series id on  
+     <a href=https://fred.stlouisfed.org/categories/ target='_blank'> FED Series</a>."
+                          )
+             ),
+                          br(), br(),
                           actionButton("add_feature", "+ Add a Feature"),
                           uiOutput("all_features_ui"),
                           br(), br(),

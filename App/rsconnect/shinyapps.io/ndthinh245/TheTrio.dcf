@@ -5,7 +5,7 @@ account: ndthinh245
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14546461
-bundleId: 10131698
+bundleId: 10136940
 url: https://ndthinh245.shinyapps.io/TheTrio/
 version: 1
 asMultiple: FALSE
