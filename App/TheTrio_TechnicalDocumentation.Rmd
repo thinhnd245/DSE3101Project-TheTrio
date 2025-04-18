@@ -2,6 +2,7 @@
 title: "Technical Documentation"
 author: "The Trio"
 date: "`r Sys.Date()`"
+fontsize: 11pt
 output:
   pdf_document: default
   html_document: default
@@ -111,7 +112,7 @@ For example, from "98" to "99", we stay in the 1900s. When it shifts from "99" t
 This function will get us the right prefix for each column. As a result, we can use this function and concatenate the prefix with the year and quarter/month and get a better column name ,for instance, “ROUTPUT65Q1” to “1965Q1”. 
 
 
-Next, we clean the dataset by reshaping into long format, allowing us to extract and organize the columns into year, quarter, v_year (vintage year), v_quarter/v_month (vintage quarter/month) and the corresponding GDP value. This structure makes it easier to filter for the corresponding vintage in future analysis.
+Next, we clean the dataset by reshaping into long format, allowing us to extract and organize the columns into year, quarter, v_year (vintage year), v_quarter/v_month (vintage quarter/month) and the corresponding GDP value. This structure makes it easier to filter for the corresponding vintage in future analysis. 
 
 ```{r}
 clean.data <- function(data, vintage_freq = "quarterly") {
@@ -123,7 +124,8 @@ clean.data <- function(data, vintage_freq = "quarterly") {
     ## Clean the data
     clean_data <- data %>%
       mutate(across(2:total_col, as.numeric)) %>%
-      pivot_longer(cols = -1, names_to = "vintage", values_to = "current_vintage") %>%
+      pivot_longer(cols = -1, names_to = "vintage", 
+                   values_to = "current_vintage") %>%
       mutate(year = str_sub(DATE, 1,4),
              quarter = str_sub(DATE, 7,7), 
              v_year = str_sub(vintage, 1,4),
@@ -133,8 +135,9 @@ clean.data <- function(data, vintage_freq = "quarterly") {
     if (vintage_freq == "quarterly") {
       final_data <- clean_data %>% 
         mutate(v_quarter = str_extract(vintage, pattern = "(?<=Q).*$")) %>%
-        select(year, quarter, v_year, v_quarter, current_vintage, log_current_vintage) %>%
-        mutate(across(1:6, as.numeric))
+        select(year, quarter, v_year, v_quarter, 
+               current_vintage, log_current_vintage) %>%
+        mutate(across(1:6, as.numeric)) # Turn all value to numeric
     }
     else {
       final_data <- clean_data %>%
@@ -196,15 +199,59 @@ fitARp=function(Y,p,h){
   }
 ```
 
+After we have implement our function, we define another function to run our forecast precedure through all the forecasting point
+```{r}
+run_ar <- function(h, p) {
+    # A dataframe to store the result
+    results <- data.frame('year' = numeric(0),
+                          'quarter' = numeric(0),
+                          'cur_pred' = numeric(0),
+                          'latest_pred' = numeric(0),
+                          'latest_growth' = numeric(0))
+                          
+    
+    for (i in 1:nrow(forecast_list())) {
+      item <- forecast_list()[i,]
+      year_f <- item$year
+      quarter_f <- item$quarter 
+      # Filter for correct vintage data
+      final_data <- filter_function(v_year1 = year_f, v_quarter1 = quarter_f) %>%
+        select(year, quarter, current_growth) %>% 
+        right_join(latest_vintage_data(), by = c('year', 'quarter')) %>% 
+        filter(year >= 1965, year <= year_f) %>% drop_na() %>%
+        select(year,quarter, current_growth, latest_growth) 
+      # Data process to input into model
+      Y_cur <- as.matrix(final_data %>% pull(current_growth))
+      Y_latest <- as.matrix(final_data %>% pull(latest_growth))
+      # Fitting the model 
+      model_cur <- fitARp(Y = Y_cur, p = p, h = h) # Current Vintage
+      model_latest <- fitARp(Y = Y_latest, p = p, h = h) # Latest Vintage
+      pred_cur <- model_cur$pred[1]
+      pred_latest <- model_latest$pred[1]
+      # Assemble the result
+      result_df <- data.frame("year" = year_f, "quarter" = quarter_f, 
+                              "cur_pred" = pred_cur, "latest_pred" = pred_latest)
+      result_df <- result_df %>% left_join(actual_data(), by = c("year", "quarter")) %>% 
+        rename("latest_growth" ="value")
+      results <- rbind(results, result_df)
+    }
+    return(results)
+  }
+```
+
 ### 2. Autoregressive Distributed Lag (ADL)
 
 ### 3. K Nearest Neighbours (KNN)
 Our third model is K-Nearest Neighbors (KNN). KNN regression has been widely studied for time series forecasting, and research has consistently shown it to perform well in capturing nonlinear patterns in the data (Lora et al., 2007;  Zhang et al., 2017)  We choose KNN to explore the self-explanatory power of GDP growth and compare this with parameter tuning models. We utilized the tsfknn package for using KNN regression for time-series forecast. 
-More information on the package can be found here: #https://github.com/franciscomartinezdelrio/tsfknn 
+More information on the package can be found here: https://github.com/franciscomartinezdelrio/tsfknn
 
-To generate an h-step ahead forecast, we use data only up to time T−h. This approach ensures that our model does not unintentionally peek into the future. We construct lag-based features by using the first four lags of the target variable as autoregressive inputs. 
-Since we are forecasting multiple steps ahead (rather than just the next time point), we also need to specify a multi-step ahead strategy. In our case, we use the Multiple Input Multiple Output (MIMO) method, which allows the model to generate all future predictions in one step. This avoids the compounding error problem commonly encountered in recursive forecasting. MIMO is therefore more stable and suitable for economic forecasting tasks like GDP growth, where forecast horizons often extend several quarters ahead. Then we extract the latest forecast which will be at time T for our purpose. 
-The loop will run through all forecast point in the forecast list, generate forecast and assemble the result for evaluation.
+
+To generate an h-step ahead forecast, we use data only up to time T-h. This approach ensures that our model does not unintentionally peek into the future. We construct lag-based features by using the first four lags of the target variable as autoregressive inputs. 
+Since we are forecasting multiple steps ahead (rather than just the next time point), we also need to specify a multi-step ahead strategy. In our case, we use the Multiple Input Multiple Output (MIMO) method, which allows the model to generate all future predictions in one step. This avoids the compounding error problem commonly encountered in recursive forecasting. 
+Another parameter that is needed to be specified is the cf, the method to aggregrate the target from their nearest neighbors. Some
+
+Then we extract the latest forecast which will be at time T for our purpose. 
+The loop will run through all forecast point in the forecast list, generate forecast and assemble the result for evalulation.
 
 ```{r}
 run_prediction_knn <- function(h, k, cf) {
@@ -213,16 +260,21 @@ run_prediction_knn <- function(h, k, cf) {
       item = forecast_list()[i,]
       year_f = item$year
       quarter_f = item$quarter
-      data <- filter_function(v_year1 = year_f, v_quarter1 = quarter_f) %>% left_join(latest_vintage_data(), by = c("year", "quarter")) %>%
+      data <- filter_function(v_year1 = year_f, v_quarter1 = quarter_f) 
+      %>% left_join(latest_vintage_data(), by = c("year", "quarter")) %>%
         select(year, quarter, current_growth, latest_growth) %>% filter(year >= 1965)
       data <- data[1:(nrow(data)-h+1),] # Extract data up until T - h
       train_data_cur <- data %>% select(-latest_growth)
       train_data_latest <- data %>% select(-current_growth)
       ts_train_cur <- ts_transform(train_data_cur) 
       ts_train_latest <- ts_transform_latest(train_data_latest)
-      model_current <- knn_forecasting(ts_train_cur, h = h, lags = 1:4, k = k, msas = "MIMO", cf = cf)
+      model_current <- knn_forecasting(ts_train_cur, h = h, 
+                                       lags = 1:4, k = k, 
+                                       msas = "MIMO", cf = cf)
       cur_pred <- tail(model_current$prediction, 1)
-      model_latest <-  knn_forecasting(ts_train_latest, h = h, lags = 1:4, k = k, msas = "MIMO", cf = cf)
+      model_latest <-  knn_forecasting(ts_train_latest, h = h, 
+                                       lags = 1:4, k = k, 
+                                       msas = "MIMO", cf = cf)
       latest_pred <- tail(model_current$prediction, 1)
       results[i, 'year'] = year_f
       results[i, 'quarter'] = quarter_f
@@ -235,3 +287,43 @@ run_prediction_knn <- function(h, k, cf) {
 ```
 
 # III. Application Frontend
+
+The layout of our application will consist of two component: Dataset and Model
+## 1. Dataset Tab
+
+The sidebar is where the user choose their dataset as well specifying the range of forecast period they are interested in. 
+To ensure meaningful forecasting results, we want the forecasting period to include a sufficient number of out-of-sample observations. In this case, we set a minimum of 30 out-of-sample points. Thus, we define a function that can determine the minimum ending period given the chosen starting period. 
+```{r}
+min_end_date_from_start <- function(start_year, start_quarter, min_quarters = 30) {
+    start_year <- as.numeric(start_year)
+    start_quarter <- as.numeric(start_quarter)
+    start_index <- start_year * 4 + (start_quarter - 1)
+    end_index <- start_index + (min_quarters - 1)
+    max_index <- 2024 * 4 + 3
+    end_index <- min(end_index, max_index)
+    end_year <- end_index %/% 4
+    end_quarter <- (end_index %% 4) + 1
+    list(year = end_year, quarter = end_quarter)
+  }
+```
+
+```{r}
+observeEvent({
+    input$vintage_year
+    input$vintage_period
+  }, {
+    req(input$vintage_year, input$vintage_period)
+    
+    min_date <- min_end_date_from_start(input$vintage_year, input$vintage_period, min_quarters = 30)
+    
+    
+    end_year_val <- if (!is.null(input$end_year)) max(input$end_year, min_date$year) else min_date$year
+    end_quarter_val <- if (!is.null(input$end_quarter)) max(input$end_quarter, min_date$quarter) else min_date$quarter
+    
+    updateNumericInput(session, "end_year", min = min_date$year, value = end_year_val, max = 2024)
+    updateSelectInput(session, "end_quarter", selected = end_quarter_val)
+  })
+```
+
+
+

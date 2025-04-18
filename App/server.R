@@ -313,21 +313,7 @@ function(input, output, session) {
     end_quarter <- (end_index %% 4) + 1
     list(year = end_year, quarter = end_quarter)
   }
-  observeEvent({
-    input$vintage_year
-    input$vintage_period
-  }, {
-    req(input$vintage_year, input$vintage_period)
-    
-    min_date <- min_end_date_from_start(input$vintage_year, input$vintage_period, min_quarters = 30)
-    
-    # Fallback values if inputs are NULL
-    end_year_val <- if (!is.null(input$end_year)) max(input$end_year, min_date$year) else min_date$year
-    end_quarter_val <- if (!is.null(input$end_quarter)) max(input$end_quarter, min_date$quarter) else min_date$quarter
-    
-    updateNumericInput(session, "end_year", min = min_date$year, value = end_year_val, max = 2024)
-    updateSelectInput(session, "end_quarter", selected = end_quarter_val)
-  })
+  
   
   count_oos_forecasts <- function(start_year, start_quarter, end_year, end_quarter) {
     start_index <- start_year * 4 + (start_quarter - 1)
