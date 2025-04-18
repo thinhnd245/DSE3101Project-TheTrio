@@ -1,0 +1,470 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Technical Documentation},
+  pdfauthor={The Trio},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Technical Documentation}
+\author{The Trio}
+\date{2025-04-18}
+
+\begin{document}
+\maketitle
+
+\hypertarget{i.-introduction}{%
+\section{I. Introduction}\label{i.-introduction}}
+
+\hypertarget{project-overview}{%
+\subsection{1. Project overview}\label{project-overview}}
+
+Macroeconomic forecasting plays a critical role in shaping national
+policy, but it faces a major challenge where real-time GDP data is often
+revised over time, making forecasting decisions difficult. Research
+(Croushore and Stark, 2001) has shown that forecasts using real-time
+data tend to be less accurate than those using revised data whereby
+traditional models may not reflect the actual economic situation.
+
+Our project addresses this issue by developing a web-based interactive
+application that allows users to benchmark various time-series
+forecasting models; using real-time and revised GDP data. Our
+application enables users to visualize and compare the accuracy and
+robustness of different models across data vintages and forecast
+horizons.
+
+Our main goal is to help policymakers and economists evaluate how
+forecasts would have performed in real-time, quantify the impact of data
+revisions, and identify which models remain reliable under changing
+economic conditions.
+
+\hypertarget{overall-design}{%
+\subsection{2. Overall design}\label{overall-design}}
+
+Our application consist of two main tabs: Dataset and Model. The Dataset
+Tab is where we allow user to either work with our provided sample
+dataset or upload their own. Here user will also set up their interest
+forecasting period. We also provide a preview of the cleaned data from
+the starting period, along with visualizations to help users to examine
+the differences in current and vintage data.
+
+The Model tab allows users to select forecasting models for evaluation
+and customize them by specifying key parameters and features. This
+interactive setup ensures that users can experiment with different
+models and directly observe their impact on forecasting performance.
+Error metrics and visualization will be provided to assess the results.
+
+\hypertarget{data-and-methodology}{%
+\subsubsection{3. Data and methodology}\label{data-and-methodology}}
+
+Our primary data source is available at
+\url{https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/routput}
+We also use the FRED API to source additional economic data for model
+enhancement.
+
+In this project, we evaluate model performance using two different data
+settings: vintage data (data available at the time of forecasting) and
+latest vintage data (revised data). This comparison helps quantify the
+impact of data revisions on forecast accuracy.
+
+We focus on three models: - Autoregressive (AR): A benchmark model that
+uses only past values of GDP growth to generate forecasts. -
+Autoregressive Distributed Lag (ADL): Extends the AR model by
+incorporating additional economic indicators. - K-Nearest Neighbors
+(KNN): A non-parametric machine learning model that relies on historical
+patterns
+
+Model performance is assessed using two standard forecasting error
+metrics: Root Mean Squared Error (RMSE) and Mean Absolute Error (MAE).
+These metrics allow us to rank models consistently based on both
+accuracy and robustness across different data vintages.
+
+\hypertarget{ii.-application-backend}{%
+\section{II. Application Backend}\label{ii.-application-backend}}
+
+\hypertarget{application-framework}{%
+\subsection{1. Application Framework}\label{application-framework}}
+
+Before moving into building the application, it is necessary to go
+through our logic. The framework of how our forecast works is as follow:
+- Current Vintage Prediction: For each point we want to forecast, we
+will use the vintage data at that point to train the model and generate
+forecast. For instance, a forecast for 2000Q1 GDP growth will use the
+2000Q1 vintage data to generate forecast. This is the real-time data
+that we have in 2000Q1 about all other dates. - Latest Vintage
+Prediction: We will use the latest vintage data for training our model
+(2025Q1), however, we use only use data up until the time of prediction.
+Thus, a 2000Q1 forecast with the latest data will only use GDP Growth up
+until 1999Q4. - Evaluation: We will then generate two sequences of
+forecasts, and calculate the error metrics of the sequences with the
+real value in the latest vintage data. The reason is that this most
+recent data is what closest to the truth by constantly going through
+revision.
+
+\hypertarget{data-preparation}{%
+\subsection{2. Data Preparation}\label{data-preparation}}
+
+For data selection, users can either work with our provided sample
+dataset or upload their own. For sample dataset, we are using the
+real-time dataset available here for download:
+\url{https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/routput}
+
+For upload option, we currently support uploads in csv, xlsx, or json
+formats. Additionally, the uploaded dataset must follow a structure
+similar to the FRED data format to ensure compatibility with our
+processing.
+
+Our initial plan was to incorporate both quarter vintages and monthly
+vintages. In order to do this, we need to detect the frequency of the
+dataset that users chose. This is where we define a function that can
+detect the frequency of dataset as below.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{detect\_frequency }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(data) \{}
+    \CommentTok{\# Get first vintage column name}
+\NormalTok{    first\_col }\OtherTok{\textless{}{-}} \FunctionTok{names}\NormalTok{(data)[}\DecValTok{2}\NormalTok{]}
+    
+    \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{str\_detect}\NormalTok{(first\_col, }\StringTok{"M}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{d+$"}\NormalTok{)) \{}
+      \FunctionTok{return}\NormalTok{(}\StringTok{"monthly"}\NormalTok{)}
+\NormalTok{    \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{str\_detect}\NormalTok{(first\_col, }\StringTok{"Q}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{d$"}\NormalTok{)) \{}
+      \FunctionTok{return}\NormalTok{(}\StringTok{"quarterly"}\NormalTok{)}
+\NormalTok{    \} }\ControlFlowTok{else}\NormalTok{ \{}
+      \FunctionTok{stop}\NormalTok{(}\StringTok{"Unsupported Uploaded File!"}\NormalTok{)}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+After we have select our data, we start our data cleaning process. We
+begin by cleaning the column names, which are in the format
+``ROUTPUT65Q1'', to extract the correct year and quarter. For each
+subsequent column, we compare the last two digits of the year with the
+previous one: If the new year is greater than or equal to the previous,
+we keep the current prefix.
+
+If it's smaller, this signals a rollover into the next century, so we
+increment the prefix by 1 (e.g., from ``19'' to ``20'').
+
+For example, from ``98'' to ``99'', we stay in the 1900s. When it shifts
+from ``99'' to ``00'', we move to the 2000s.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\# Get the right century for the year}
+\NormalTok{  clean\_columns }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(data) \{}
+    
+\NormalTok{    data\_cols }\OtherTok{\textless{}{-}} \FunctionTok{names}\NormalTok{(data)[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{] }\SpecialCharTok{\%\textgreater{}\%}
+      \FunctionTok{str\_remove}\NormalTok{(}\AttributeTok{pattern =} \StringTok{"ROUTPUT"}\NormalTok{)}
+    
+\NormalTok{    yy }\OtherTok{\textless{}{-}} \FunctionTok{str\_sub}\NormalTok{(data\_cols, }\AttributeTok{start =} \DecValTok{1}\NormalTok{, }\AttributeTok{end =} \DecValTok{2}\NormalTok{)}
+\NormalTok{    prev\_yy }\OtherTok{\textless{}{-}}\NormalTok{ yy[}\DecValTok{1}\NormalTok{]}
+\NormalTok{    century }\OtherTok{=} \DecValTok{19}
+\NormalTok{    complete\_year }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
+    \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(yy)) \{}
+\NormalTok{      cur\_yy }\OtherTok{\textless{}{-}}\NormalTok{ yy[i]}
+      \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{as.numeric}\NormalTok{(cur\_yy) }\SpecialCharTok{\textless{}} \FunctionTok{as.numeric}\NormalTok{(prev\_yy)) \{}
+\NormalTok{        century }\OtherTok{=}\NormalTok{ century }\SpecialCharTok{+} \DecValTok{1}
+\NormalTok{      \}}
+\NormalTok{      complete\_year[i] }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(century, cur\_yy)}
+\NormalTok{      prev\_yy }\OtherTok{\textless{}{-}}\NormalTok{ cur\_yy}
+\NormalTok{    \}}
+    \FunctionTok{return}\NormalTok{(complete\_year)}
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+This function will get us the right prefix for each column. As a result,
+we can use this function and concatenate the prefix with the year and
+quarter/month and get a better column name ,for instance,
+``ROUTPUT65Q1'' to ``1965Q1''.
+
+Next, we clean the dataset by reshaping into long format, allowing us to
+extract and organize the columns into year, quarter, v\_year (vintage
+year), v\_quarter/v\_month (vintage quarter/month) and the corresponding
+GDP value. This structure makes it easier to filter for the
+corresponding vintage in future analysis.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{clean.data }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(data, }\AttributeTok{vintage\_freq =} \StringTok{"quarterly"}\NormalTok{) \{}
+    
+\NormalTok{    q }\OtherTok{\textless{}{-}} \FunctionTok{names}\NormalTok{(data)[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{] }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{str\_remove}\NormalTok{(}\AttributeTok{pattern =} \StringTok{"ROUTPUT"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{str\_sub}\NormalTok{(}\AttributeTok{start =} \DecValTok{1}\NormalTok{)}
+\NormalTok{    clean\_cols }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(}\FunctionTok{clean\_columns}\NormalTok{(data), q)}
+    \FunctionTok{names}\NormalTok{(data)[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{] }\OtherTok{\textless{}{-}}\NormalTok{ clean\_cols}
+\NormalTok{    total\_col }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{names}\NormalTok{(data))}
+    \DocumentationTok{\#\# Clean the data}
+\NormalTok{    clean\_data }\OtherTok{\textless{}{-}}\NormalTok{ data }\SpecialCharTok{\%\textgreater{}\%}
+      \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\DecValTok{2}\SpecialCharTok{:}\NormalTok{total\_col, as.numeric)) }\SpecialCharTok{\%\textgreater{}\%}
+      \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \SpecialCharTok{{-}}\DecValTok{1}\NormalTok{, }\AttributeTok{names\_to =} \StringTok{"vintage"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"current\_vintage"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+      \FunctionTok{mutate}\NormalTok{(}\AttributeTok{year =} \FunctionTok{str\_sub}\NormalTok{(DATE, }\DecValTok{1}\NormalTok{,}\DecValTok{4}\NormalTok{),}
+             \AttributeTok{quarter =} \FunctionTok{str\_sub}\NormalTok{(DATE, }\DecValTok{7}\NormalTok{,}\DecValTok{7}\NormalTok{), }
+             \AttributeTok{v\_year =} \FunctionTok{str\_sub}\NormalTok{(vintage, }\DecValTok{1}\NormalTok{,}\DecValTok{4}\NormalTok{),}
+             \AttributeTok{log\_current\_vintage =} \FunctionTok{log}\NormalTok{(current\_vintage)) }\SpecialCharTok{\%\textgreater{}\%}
+      \FunctionTok{drop\_na}\NormalTok{()}
+    
+    \ControlFlowTok{if}\NormalTok{ (vintage\_freq }\SpecialCharTok{==} \StringTok{"quarterly"}\NormalTok{) \{}
+\NormalTok{      final\_data }\OtherTok{\textless{}{-}}\NormalTok{ clean\_data }\SpecialCharTok{\%\textgreater{}\%} 
+        \FunctionTok{mutate}\NormalTok{(}\AttributeTok{v\_quarter =} \FunctionTok{str\_extract}\NormalTok{(vintage, }\AttributeTok{pattern =} \StringTok{"(?\textless{}=Q).*$"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+        \FunctionTok{select}\NormalTok{(year, quarter, v\_year, v\_quarter, current\_vintage, log\_current\_vintage) }\SpecialCharTok{\%\textgreater{}\%}
+        \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{, as.numeric))}
+\NormalTok{    \}}
+    \ControlFlowTok{else}\NormalTok{ \{}
+\NormalTok{      final\_data }\OtherTok{\textless{}{-}}\NormalTok{ clean\_data }\SpecialCharTok{\%\textgreater{}\%}
+        \FunctionTok{mutate}\NormalTok{(}\AttributeTok{v\_month =} \FunctionTok{str\_extract}\NormalTok{(vintage, }\AttributeTok{pattern =} \StringTok{"(?\textless{}=M).*$"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+        \FunctionTok{select}\NormalTok{(year, quarter, v\_year, v\_month, current\_vintage, log\_current\_vintage) }\SpecialCharTok{\%\textgreater{}\%}
+        \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{, as.numeric))}
+\NormalTok{    \}}
+    
+    
+    \FunctionTok{return}\NormalTok{(final\_data)}
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+As the project progressed, we chose to focus exclusively on quarterly
+vintage data. This decision simplifies the modeling process while still
+aligning with our primary goal: quantifying the impact of data
+revisions. With that being said, it is completely possible to extend our
+model to accompany monthly vintage data as the structure would be very
+similar to how we handle quarterly data.
+
+Moving on, we define a filtering function to extract data for a specific
+vintage, based on the selected vintage year and quarter. This function
+will take in the vintage year and vintage quarter and output the filter
+table with the same structure, with the additional columns that we need
+such as current vintage gdp level (current\_vintage) and vintage growth
+(current\_growth)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{filter\_function }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(v\_year1, v\_quarter1) \{}
+    \FunctionTok{cleaned\_data}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(v\_year }\SpecialCharTok{==}\NormalTok{ v\_year1,}
+\NormalTok{                              v\_quarter }\SpecialCharTok{==}\NormalTok{ v\_quarter1) }\SpecialCharTok{\%\textgreater{}\%}
+      
+      \FunctionTok{mutate}\NormalTok{(}\AttributeTok{lag\_current\_vintage =} \FunctionTok{lag}\NormalTok{(current\_vintage,}\DecValTok{1}\NormalTok{),}
+             \AttributeTok{log\_lag\_current\_vintage =} \FunctionTok{log}\NormalTok{(lag\_current\_vintage),}
+             \AttributeTok{current\_growth =} \DecValTok{400}\SpecialCharTok{*}\NormalTok{(log\_current\_vintage }\SpecialCharTok{{-}}\NormalTok{ log\_lag\_current\_vintage))}
+    
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+Due to missing data from earlier years in some vintages, we begin all
+analyses from 1965, which is also the first available vintage in our
+dataset. However, this introduces a challenge: if a user selects a
+forecast starting point close to 1965, the model will have limited
+historical data to train on. This lack of training data may negatively
+impact model performance and forecast reliability. One solution would be
+to restrict the range of vintages that users can choose to allow a
+certain level of training size. This would be a potential area for
+further research to determine the suitable range.
+
+\hypertarget{model-construction}{%
+\subsection{Model Construction}\label{model-construction}}
+
+\hypertarget{autoregressive-ar}{%
+\subsubsection{1. Autoregressive (AR)}\label{autoregressive-ar}}
+
+We choose our baseline model to be the AR model. The AR model serves
+well as the baseline model because it is a relatively intuitive model.
+The idea behind the choice is that past growths (lags) of GDP could be
+used to predict GDP growth in the next period.
+
+First, we define a function to fit an AR model with lag p.~Since we are
+using its own lag for regression, the function will only need to take in
+the data for the target variable Y, accompany with p for the number of
+lags and h for forecast horizon.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fitARp}\OtherTok{=}\ControlFlowTok{function}\NormalTok{(Y,p,h)\{}
+    
+    \CommentTok{\#Inputs: Y{-} predicted variable,  p {-} AR order, h {-}forecast horizon}
+\NormalTok{    aux}\OtherTok{=}\FunctionTok{embed}\NormalTok{(Y,p}\SpecialCharTok{+}\NormalTok{h) }\CommentTok{\#create p lags + forecast horizon shift (=h option)}
+\NormalTok{    y}\OtherTok{=}\NormalTok{aux[,}\DecValTok{1}\NormalTok{] }\CommentTok{\#  Y variable aligned/adjusted for missing data due to lags}
+\NormalTok{    X}\OtherTok{=}\FunctionTok{as.matrix}\NormalTok{(aux[,}\SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\NormalTok{(}\FunctionTok{ncol}\NormalTok{(Y)}\SpecialCharTok{*}\NormalTok{h))]) }\CommentTok{\# lags of Y corresponding to forecast horizon }
+    \ControlFlowTok{if}\NormalTok{(h}\SpecialCharTok{==}\DecValTok{1}\NormalTok{)\{ }
+\NormalTok{      X.out}\OtherTok{=}\FunctionTok{tail}\NormalTok{(aux,}\DecValTok{1}\NormalTok{)[}\DecValTok{1}\SpecialCharTok{:}\FunctionTok{ncol}\NormalTok{(X)] }\CommentTok{\#retrieve last p observations if one{-}step forecast }
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+\NormalTok{      X.out}\OtherTok{=}\NormalTok{aux[,}\SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\NormalTok{(}\FunctionTok{ncol}\NormalTok{(Y)}\SpecialCharTok{*}\NormalTok{(h}\DecValTok{{-}1}\NormalTok{)))] }\CommentTok{\#delete first (h{-}1) columns of aux,  }
+\NormalTok{      X.out}\OtherTok{=}\FunctionTok{tail}\NormalTok{(X.out,}\DecValTok{1}\NormalTok{)[}\DecValTok{1}\SpecialCharTok{:}\FunctionTok{ncol}\NormalTok{(X)] }\CommentTok{\#last p observations to predict T+1 }
+\NormalTok{    \}}
+    
+\NormalTok{    model}\OtherTok{=}\FunctionTok{lm}\NormalTok{(y}\SpecialCharTok{\textasciitilde{}}\NormalTok{X) }\CommentTok{\#estimate direct h{-}step AR(p) by OLS }
+\NormalTok{    coef}\OtherTok{=}\FunctionTok{coef}\NormalTok{(model) }\CommentTok{\#extract coefficients}
+    \CommentTok{\#make a forecast using the last few observations: a direct h{-}step forecast.}
+\NormalTok{    pred}\OtherTok{=}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,X.out)}\SpecialCharTok{\%*\%}\NormalTok{coef }
+    
+    \FunctionTok{return}\NormalTok{(}\FunctionTok{list}\NormalTok{(}\StringTok{"pred"}\OtherTok{=}\NormalTok{pred)) }
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{autoregressive-distributed-lag-adl}{%
+\subsubsection{2. Autoregressive Distributed Lag
+(ADL)}\label{autoregressive-distributed-lag-adl}}
+
+\hypertarget{k-nearest-neighbours-knn}{%
+\subsubsection{3. K Nearest Neighbours
+(KNN)}\label{k-nearest-neighbours-knn}}
+
+Our third model is K-Nearest Neighbors (KNN). KNN regression has been
+widely studied for time series forecasting, and research has
+consistently shown it to perform well in capturing nonlinear patterns in
+the data (Lora et al., 2007; Zhang et al., 2017) We choose KNN to
+explore the self-explanatory power of GDP growth and compare this with
+parameter tuning models. We utilized the tsfknn package for using KNN
+regression for time-series forecast. More information on the package can
+be found here:
+
+To generate an h-step ahead forecast, we use data only up to time T−h.
+This approach ensures that our model does not unintentionally peek into
+the future. We construct lag-based features by using the first four lags
+of the target variable as autoregressive inputs. Since we are
+forecasting multiple steps ahead (rather than just the next time point),
+we also need to specify a multi-step ahead strategy. In our case, we use
+the Multiple Input Multiple Output (MIMO) method, which allows the model
+to generate all future predictions in one step. This avoids the
+compounding error problem commonly encountered in recursive forecasting.
+MIMO is therefore more stable and suitable for economic forecasting
+tasks like GDP growth, where forecast horizons often extend several
+quarters ahead. Then we extract the latest forecast which will be at
+time T for our purpose. The loop will run through all forecast point in
+the forecast list, generate forecast and assemble the result for
+evalulation.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{recursive\_prediction\_knn }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(h, k, cf) \{}
+\NormalTok{    results }\OtherTok{=} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{year =} \FunctionTok{numeric}\NormalTok{(}\DecValTok{0}\NormalTok{), }\AttributeTok{quarter =} \FunctionTok{numeric}\NormalTok{(}\DecValTok{0}\NormalTok{), }\AttributeTok{cur\_forecast =} \FunctionTok{numeric}\NormalTok{(}\DecValTok{0}\NormalTok{), }\AttributeTok{latest\_forecast =} \FunctionTok{numeric}\NormalTok{(}\DecValTok{0}\NormalTok{))}
+    \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{nrow}\NormalTok{(}\FunctionTok{forecast\_list}\NormalTok{())) \{}
+\NormalTok{      item }\OtherTok{=} \FunctionTok{forecast\_list}\NormalTok{()[i,]}
+\NormalTok{      year\_f }\OtherTok{=}\NormalTok{ item}\SpecialCharTok{$}\NormalTok{year}
+\NormalTok{      quarter\_f }\OtherTok{=}\NormalTok{ item}\SpecialCharTok{$}\NormalTok{quarter}
+\NormalTok{      data }\OtherTok{\textless{}{-}} \FunctionTok{filter\_function}\NormalTok{(}\AttributeTok{v\_year1 =}\NormalTok{ year\_f, }\AttributeTok{v\_quarter1 =}\NormalTok{ quarter\_f) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{left\_join}\NormalTok{(}\FunctionTok{latest\_vintage\_data}\NormalTok{(), }\AttributeTok{by =} \FunctionTok{c}\NormalTok{(}\StringTok{"year"}\NormalTok{, }\StringTok{"quarter"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+        \FunctionTok{select}\NormalTok{(year, quarter, current\_growth, latest\_growth) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(year }\SpecialCharTok{\textgreater{}=} \DecValTok{1965}\NormalTok{)}
+\NormalTok{      data }\OtherTok{\textless{}{-}}\NormalTok{ data[}\DecValTok{1}\SpecialCharTok{:}\NormalTok{(}\FunctionTok{nrow}\NormalTok{(data)}\SpecialCharTok{{-}}\NormalTok{h}\SpecialCharTok{+}\DecValTok{1}\NormalTok{),] }\CommentTok{\# Extract data up until T {-} h}
+\NormalTok{      train\_data\_cur }\OtherTok{\textless{}{-}}\NormalTok{ data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{latest\_growth)}
+\NormalTok{      train\_data\_latest }\OtherTok{\textless{}{-}}\NormalTok{ data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{current\_growth)}
+\NormalTok{      ts\_train\_cur }\OtherTok{\textless{}{-}} \FunctionTok{ts\_transform}\NormalTok{(train\_data\_cur) }
+\NormalTok{      ts\_train\_latest }\OtherTok{\textless{}{-}} \FunctionTok{ts\_transform\_latest}\NormalTok{(train\_data\_latest)}
+\NormalTok{      model\_current }\OtherTok{\textless{}{-}} \FunctionTok{knn\_forecasting}\NormalTok{(ts\_train\_cur, }\AttributeTok{h =}\NormalTok{ h, }\AttributeTok{lags =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{, }\AttributeTok{k =}\NormalTok{ k, }\AttributeTok{msas =} \StringTok{"MIMO"}\NormalTok{, }\AttributeTok{cf =}\NormalTok{ cf)}
+\NormalTok{      cur\_pred }\OtherTok{\textless{}{-}} \FunctionTok{tail}\NormalTok{(model\_current}\SpecialCharTok{$}\NormalTok{prediction, }\DecValTok{1}\NormalTok{)}
+\NormalTok{      model\_latest }\OtherTok{\textless{}{-}}  \FunctionTok{knn\_forecasting}\NormalTok{(ts\_train\_latest, }\AttributeTok{h =}\NormalTok{ h, }\AttributeTok{lags =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{, }\AttributeTok{k =}\NormalTok{ k, }\AttributeTok{msas =} \StringTok{"MIMO"}\NormalTok{, }\AttributeTok{cf =}\NormalTok{ cf)}
+\NormalTok{      latest\_pred }\OtherTok{\textless{}{-}} \FunctionTok{tail}\NormalTok{(model\_current}\SpecialCharTok{$}\NormalTok{prediction, }\DecValTok{1}\NormalTok{)}
+\NormalTok{      results[i, }\StringTok{\textquotesingle{}year\textquotesingle{}}\NormalTok{] }\OtherTok{=}\NormalTok{ year\_f}
+\NormalTok{      results[i, }\StringTok{\textquotesingle{}quarter\textquotesingle{}}\NormalTok{] }\OtherTok{=}\NormalTok{ quarter\_f}
+\NormalTok{      results[i, }\StringTok{\textquotesingle{}cur\_forecast\textquotesingle{}}\NormalTok{] }\OtherTok{=}\NormalTok{ cur\_pred}
+\NormalTok{      results[i, }\StringTok{\textquotesingle{}latest\_forecast\textquotesingle{}}\NormalTok{] }\OtherTok{=}\NormalTok{ latest\_pred      }
+    
+\NormalTok{    \}}
+    \FunctionTok{return}\NormalTok{(results)}
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{iii.-application-frontend}{%
+\section{III. Application Frontend}\label{iii.-application-frontend}}
+
+\end{document}

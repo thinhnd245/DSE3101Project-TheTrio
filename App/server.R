@@ -181,10 +181,7 @@ function(input, output, session) {
                               v_quarter == v_quarter1) %>%
       
       mutate(lag_current_vintage = lag(current_vintage,1),
-             
              log_lag_current_vintage = log(lag_current_vintage),
-             
-             
              current_growth = 400*(log_current_vintage - log_lag_current_vintage))
     
   }
@@ -563,7 +560,7 @@ function(input, output, session) {
         k <- as.numeric(unlist(strsplit(as.character(k_input), ",")))
         cf <- input[[paste0('knn_cf_', i)]]
         
-        knn_result_df <- recursive_prediction_knn(h = h, k = k, cf = cf) %>% 
+        knn_result_df <- run_prediction_knn(h = h, k = k, cf = cf) %>% 
           left_join(latest_vintage_data(), by = c('year', 'quarter')) %>%
           select(year,quarter, cur_forecast, latest_forecast, latest_growth) %>%
           rename("cur_pred" = "cur_forecast",
@@ -938,7 +935,7 @@ function(input, output, session) {
     
   
   # lag-step forecast
-  recursive_prediction_knn <- function(h, k, cf) {
+  run_prediction_knn <- function(h, k, cf) {
     results = data.frame(year = numeric(0), quarter = numeric(0), cur_forecast = numeric(0), latest_forecast = numeric(0))
     for (i in 1:nrow(forecast_list())) {
       item = forecast_list()[i,]
@@ -954,10 +951,10 @@ function(input, output, session) {
       
       
       
-      model_current <- knn_forecasting(ts_train_cur, h = 1, lags = 1:4, k = k, msas = "MIMO", cf = cf)
-      cur_pred <- model_current$prediction[1]
-      model_latest <-  knn_forecasting(ts_train_latest, h = 1, lags = 1:4, k = k, msas = "MIMO", cf = cf)
-      latest_pred <- model_latest$prediction[1]
+      model_current <- knn_forecasting(ts_train_cur, h = h, lags = 1:4, k = k, msas = "MIMO", cf = cf)
+      cur_pred <- tail(model_current$prediction, 1)
+      model_latest <-  knn_forecasting(ts_train_latest, h = h, lags = 1:4, k = k, msas = "MIMO", cf = cf)
+      latest_pred <- tail(model_current$prediction, 1)
       results[i, 'year'] = year_f
       results[i, 'quarter'] = quarter_f
       results[i, 'cur_forecast'] = cur_pred
@@ -967,10 +964,7 @@ function(input, output, session) {
     return(results)
   }
   
-  output$test4 <- renderTable({
-    recursive_prediction_knn(h = 2, k = 5, cf = "mean")
-    
-  })
+
   ##### Linear Regression #####
   
   
@@ -1086,7 +1080,7 @@ function(input, output, session) {
   
   
   
-  ### Linear Regression
+
   
   
   #### AR ####
@@ -1095,12 +1089,9 @@ function(input, output, session) {
   fitARp=function(Y,p,h){
     
     #Inputs: Y- predicted variable,  p - AR order, h -forecast horizon
-    
-    
     aux=embed(Y,p+h) #create p lags + forecast horizon shift (=h option)
     y=aux[,1] #  Y variable aligned/adjusted for missing data due to lags
-    X=as.matrix(aux[,-c(1:(ncol(Y)*h))]) # lags of Y (predictors) corresponding to forecast horizon (prevent leakage)  
-    
+    X=as.matrix(aux[,-c(1:(ncol(Y)*h))]) # lags of Y corresponding to forecast horizon 
     if(h==1){ 
       X.out=tail(aux,1)[1:ncol(X)] #retrieve last p observations if one-step forecast 
     }else{
@@ -1111,15 +1102,9 @@ function(input, output, session) {
     
     model=lm(y~X) #estimate direct h-step AR(p) by OLS 
     coef=coef(model) #extract coefficients
-    
-    
-    
     pred=c(1,X.out)%*%coef #make a forecast using the last few observations: a direct h-step forecast.
     #note the addition of a constant to the test observation vector
-    
-    rmsfe=sqrt(sum(model$residuals^2)/nrow(X)) #get unadjusted rmsfe (ignoring estimation uncertainty)
-    
-    return(list("model"=model,"pred"=pred,"coef"=coef, "rmsfe"=rmsfe)) #save estimated AR regression, prediction, and estimated coefficients
+    return(list("pred"=pred)) #save estimated AR regression, prediction, and estimated coefficients
   }
   run_ar <- function(h, p) {
     results <- data.frame('year' = numeric(0),
