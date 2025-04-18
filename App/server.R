@@ -525,7 +525,18 @@ function(input, output, session) {
     sapply(ids, function(i) input[[paste0("feature_id_", i)]])
   })
   
-  
+  is_valid_series <- function(series_id) {
+    tryCatch({
+      fredr_series_observations(
+        series_id = series_id,
+        frequency = "q",
+        aggregation_method = "avg"
+      )
+      TRUE 
+    }, error = function(e) {
+      FALSE  
+    })
+  }
   # Run all models
   modeltype = reactiveVal(list())
   results = reactiveVal(list())
@@ -578,18 +589,27 @@ function(input, output, session) {
           showNotification("Please add a feature for ADL or use AR model instead.", type = "error")
           return()
         }
+        invalid_ids <- feature_series_ids()[!sapply(feature_series_ids(), is_valid_series)]
+        
+        
+        if (length(invalid_ids) > 0) {
+          showNotification(paste("The following series IDs are invalid:", paste(invalid_ids, collapse = ", ")))
+          return()    
+        }
         features <- c()
         feature_lags <- c() 
         feature_transforms <- c()
         for (feature in feature_series_ids()) {
           features <- c(features,feature)
         }
+        
         for (feature_lag in feature_lag_series()) {
           feature_lags <- c(feature_lags, feature_lag)
         }
         for (feature_transform in feature_transform_series()) {
           feature_transforms <- c(feature_transforms, feature_transform)
         }
+        
         adl_result_df <- run_adl_model(h = h, features = features, lag_y = ylag_input_adl, lags = feature_lags,units = feature_transforms) %>% 
           rename("latest_growth" = "value") 
         adl_per_df <- adl_result_df %>% summarize(cur_mae = round(mean(abs(cur_pred - latest_growth)),2),
