@@ -1,4 +1,4 @@
-# DSE3101---Project
+# DSE3101 Project
 The Trio DSE3101 Project
 
 Topic: Benchmarking forecasting models for GDP growth with real-time data
