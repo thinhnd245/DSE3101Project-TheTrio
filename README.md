@@ -17,5 +17,6 @@ Model Selection:
 3. K Nearest Neighbours (KNN): available parameters are number of neighbours (can be either a number or a vector of numbers) and cf (the aggregrate function that determine our forecasts after identify the neighbours)
 
 
-Feature Selection
+Feature Selection:
+
 Please use https://fred.stlouisfed.org/categories/ for looking up your interest features
