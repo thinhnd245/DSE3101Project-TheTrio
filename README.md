@@ -5,7 +5,9 @@ Topic: Benchmarking forecasting models for GDP growth with real-time data
 
 Run app locally
 1. Clone the app to your local device
-2. Run the app
+git clone https://github.com/thinhnd245/DSE3101Project-TheTrio.git
+2. Open the app (either ui.R or server.R) in RStudio
+3. Run the app
 
 Model Selection:
 1. Autoregressive (AR): available parameter is number of lags
