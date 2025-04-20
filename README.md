@@ -3,6 +3,8 @@ The Trio DSE3101 Project
 
 Topic: Benchmarking forecasting models for GDP growth with real-time data
 
+App deployment link: https://ndthinh245.shinyapps.io/TheTrio/
+
 Run app locally
 1. Clone the app to your local device
 ```bash
