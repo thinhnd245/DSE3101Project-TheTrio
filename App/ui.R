@@ -95,9 +95,8 @@ navbarPage(
                            tabPanel("Comparison", uiOutput('comparison')),
                            tabPanel("Visualization", uiOutput('modelplot'))
                          )
-                         
-                       )
-           )
+                    )
+             )
   )
 )
 

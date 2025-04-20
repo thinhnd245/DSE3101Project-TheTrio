@@ -13,21 +13,17 @@ library(stats)
 
 function(input, output, session) {
   
-  ######Import Additional Features #######
+  ###### Additional Set Up #######
   
   key <- '767c9c44fa69c7b7341535020cea9134'
   fredr_set_key(key = key)
 
   ################### Data Tab ########################
-  
-  
-  
   ### Helper Functions ###
-  
-  
-  
+
+  # Get first vintage column name
   detect_frequency <- function(data) {
-    # Get first vintage column name
+    
     first_col <- names(data)[2]
     
     if (str_detect(first_col, "M\\d+$")) {
@@ -1205,7 +1201,6 @@ function(input, output, session) {
 
       for (j in 1:lag) {
         
-        
         latest_lag_feature <- lag(data[[paste0(feature)]], h-1+j)
         latest_lag_feature_df <- data.frame('year' = data$year, 'quarter' = data$quarter, 
                                             setNames(data.frame(c(latest_lag_feature)), paste0(feature, "_lag", h-1+j)))
@@ -1213,22 +1208,19 @@ function(input, output, session) {
       }
       
     }
-    
-    
-    
-    
+
     #data <- data[, -c(5:(4+length(features)))]
     data <- data %>% filter(year >= 1965) %>% mutate
     data <- data[1:n,]
   
-    # Current Prediction
+    
     x_var <- names(data)
     x_var_cur <- x_var[c(5:(4+lag_y), (5+2*lag_y):length(x_var))]
     x_var_cur <- x_var_cur[x_var_cur %in% names(data)] 
     x_var_latest <- x_var[c(5+lag_y:length(x_var))] 
     x_var_latest <- x_var_latest[x_var_latest %in% names(data)] 
     
-    
+    # Current Prediction
     formula1 <- as.formula(paste('current_growth', "~", paste(x_var_cur, collapse = " + ")))
     model1 <- lm(data = data %>% drop_na(), formula = formula1)
     latest_input1 <- data %>% filter(year == v_year1, quarter == v_quarter1) %>% select(!!!syms(x_var_cur))
@@ -1244,11 +1236,7 @@ function(input, output, session) {
     
     result <- data.frame('year' = v_year1, 'quarter' = v_quarter1, 'cur_pred' = pred1, 'latest_pred' = pred2)
     result <- result %>% left_join(actual_data(), by = c('year', 'quarter')) 
-    #result <- result %>% mutate(cur_mae = mean(abs(cur_pred - value)),
-    #                           latest_mae = mean(abs(latest_pred - value)),
-    #                            cur_mse = mean((cur_pred - value)^2), 
-    #                            latest_mse = mean((latest_pred - value)^2)) %>%
-     # rename("latest_growth" = "value")
+   
     return(result)
   }
   
@@ -1272,7 +1260,7 @@ function(input, output, session) {
                         v_quarter2 = quarter_f, units = units)
       result_df <- prediction_adl(h = h, data = dat, features = features, lags = lags,lag_y = lag_y, v_year1 = year_f,
                                  v_quarter1 = quarter_f)
-      #result_df <- prediction_adl(h = 2, data = dat, features, lags = lags,lag_y = lag_y, v_year1 = year_f,v_quarter1 = quarter_f)
+     
       results <- rbind(results, result_df)
       
     }
@@ -1282,7 +1270,7 @@ function(input, output, session) {
   }
   
  
-  
+
 
   
   next_quarter <- function(quarter, year) {
