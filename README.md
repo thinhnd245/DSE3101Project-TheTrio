@@ -11,7 +11,7 @@ Run app locally
 git clone https://github.com/thinhnd245/DSE3101Project-TheTrio.git
 ```
 2. Open the app (either ui.R or server.R) in RStudio
-3. In RStudio, open app.R and click Run App
+3. In RStudio, click Run App
 or run the following in the console:
 ```bash
 shiny::runApp()
